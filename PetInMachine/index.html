@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小猫动作素材展示 (Spritesheet Player)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 { margin-bottom: 30px; color: #2c3e50; }
+        .gallery {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .asset-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 300px;
+        }
+        .asset-card h2 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #555;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .gif-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .sprite-viewport {
+            width: 300px; /* 默认值，JS会改 */
+            height: 300px; /* 默认值，JS会改 */
+            margin: 0 auto;
+            background-image: url('cat_lick.png');
+            background-repeat: no-repeat;
+            background-position: 0 0;
+            box-shadow: 0 0 0 2px #3498db;
+            /* 图片可能很大，需要缩放背景以适应视口 */
+            /* background-size: 100%; 这个不能简单设置，因为是spritesheet */
+            
+            /* 我们通过缩放容器来适应屏幕，而不是缩放背景 */
+            transform-origin: top center;
+        }
+        
+        .viewport-container {
+            overflow: auto; /* 如果太大可以滚动 */
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            margin-top: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .control-group {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .control-group label { font-weight: bold; margin-right: 10px; }
+        .control-group input { width: 80px; padding: 4px; }
+        .info { font-size: 0.8rem; color: #666; margin-top: 5px; white-space: pre-wrap; }
+
+    </style>
+</head>
+<body>
+
+    <h1>小猫动作素材展示</h1>
+
+    <div class="gallery">
+        <div class="asset-card">
+            <h2>GIF 原图 (参考)</h2>
+            <img src="cat_lick.gif" alt="Cat Lick GIF" class="gif-img">
+        </div>
+
+        <div class="asset-card">
+            <h2>Spritesheet 播放器 (Grid)</h2>
+            
+            <div class="viewport-container">
+                <div class="sprite-viewport" id="spriteViewport"></div>
+            </div>
+            
+            <!-- 缩放控制 -->
+            <div style="margin-bottom: 10px;">
+                <label>预览缩放: <input type="range" id="scaleRange" min="0.1" max="1" step="0.1" value="0.2"></label>
+                <span id="scaleValue">0.2x</span>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="frameCount">总帧数 (Frames):</label>
+                    <input type="number" id="frameCount" value="76" min="1">
+                </div>
+                <div class="control-group">
+                    <label for="colCount">列数 (Cols):</label>
+                    <input type="number" id="colCount" value="12" min="1">
+                </div>
+                <div class="control-group">
+                    <label for="fps">速度 (FPS):</label>
+                    <input type="number" id="fps" value="10" min="1" max="60">
+                </div>
+                <div class="info" id="debugInfo">正在加载...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const spriteViewport = document.getElementById('spriteViewport');
+        const frameInput = document.getElementById('frameCount');
+        const colInput = document.getElementById('colCount');
+        const fpsInput = document.getElementById('fps');
+        const debugInfo = document.getElementById('debugInfo');
+        const scaleRange = document.getElementById('scaleRange');
+        const scaleValue = document.getElementById('scaleValue');
+
+        let totalWidth = 0;
+        let totalHeight = 0;
+        let animationId = null;
+        let currentFrame = 0;
+        let lastTime = 0;
+
+        // 图片加载
+        const img = new Image();
+        img.src = 'cat_lick.png';
+
+        img.onload = function() {
+            totalWidth = img.naturalWidth;
+            totalHeight = img.naturalHeight;
+            startAnimation();
+        };
+
+        // 监听输入
+        [frameInput, colInput, fpsInput].forEach(el => {
+            el.addEventListener('input', () => {
+                // 重置动画
+                currentFrame = 0; 
+                updateInfo();
+            });
+        });
+
+        scaleRange.addEventListener('input', (e) => {
+            const val = e.target.value;
+            scaleValue.textContent = val + 'x';
+            spriteViewport.style.transform = `scale(${val})`;
+            // 调整容器高度以避免空白或遮挡
+            // 由于 scale 是 transform，不占布局空间，需要手动调整父容器
+             const h = parseFloat(spriteViewport.style.height) || 0;
+             spriteViewport.parentElement.style.height = (h * val) + 'px';
+        });
+
+        function updateInfo() {
+            const frames = parseInt(frameInput.value) || 1;
+            const cols = parseInt(colInput.value) || 1;
+            
+            // 计算单帧尺寸
+            // 假设每行也是对齐的，所以行数 = Math.ceil(frames / cols) 是不对的，应该是 TotalHeight / Rows
+            // 但是我们不知道 Rows，只知道 Cols。
+            // 假设图片是完整网格：FrameWidth = TotalW / Cols
+            const frameWidth = Math.floor(totalWidth / cols);
+            
+            // FrameHeight 比较难猜，除非我们也输入 Rows。
+            // 但通常 SpriteSheet 高度也是均分的。
+            // 让我们假设 Rows = Math.ceil(TotalFrames / Cols) 且图片高度正好塞满？
+            // 不一定。可能图片下面有留白。
+            // 最好的办法是计算 Rows。
+            // 如果我们假设单帧是正方形？或者假设图片利用率最高？
+            // 暂时假设: FrameHeight = TotalHeight / Math.ceil(frames / cols)
+            // 不，Python脚本里是直接用 GIF 尺寸算出来的。
+            // 这里我们用简化的逻辑：行数 = 总高度 / (总宽度/列数) * 宽高比?
+            // 不，直接假设 Rows = Math.ceil(TotalFrames / Cols) 是危险的。
+            // 我们应该让 Python 脚本把 Rows 也填进来? 或者直接让 User 填?
+            // 为了简化，我们假设图片是严丝合缝的网格。
+            
+            // 实际上，如果知道 Cols，我们可以推断 FrameWidth。
+            // 如果知道 FrameWidth，我们也许能猜出 FrameHeight (比如也是 FrameWidth)。
+            // 在此案例中，Python 脚本告诉我们它是 12 cols, 1440x1440.
+            
+            // 这里我们暂时用一个简单的逻辑：
+            // Rows = TotalHeight / (TotalWidth / Cols) ???
+            // 只有当它是正方形单帧时成立。
+            
+            // 让我们再加一个推断：尝试用 TotalHeight / Math.ceil(frames / cols)
+            const estimatedRows = Math.ceil(frames / cols); 
+            // 如果是一张满的图，Rows 就是 TotalHeight / frameHeight. 
+            // 这是一个循环依赖。
+            
+            // 修正策略：强制假设单帧是正方形 (1:1) 如果没别的线索？
+            // 或者：直接用 totalHeight / estimatedRows 作为 frameHeight
+            
+            // 最好是：FrameWidth = totalWidth / cols
+            // FrameHeight = totalHeight / (totalHeight / (totalWidth/cols)) -> 这样就变成正方形了。
+            
+            // 让我们采用最通用的：
+            // FrameWidth = totalWidth / cols
+            // FrameHeight = totalHeight / (Math.ceil(frames/cols) 或者 直接看行数)
+            // 在这个特定案例中，15840 / 11 = 1440. 11行。
+            // 76帧 / 12列 = 6.33 -> 意味着只要7行就能放完？
+            // 不，GIF 76帧，但 PNG 是 12x11 = 132格。这说明有很多空格子！
+            // 所以我们不能用 frames 来倒推行数。
+            // 必须依靠图像尺寸。
+            
+            // 修正逻辑：
+            // FrameWidth = TotalWidth / Cols
+            // FrameHeight = FrameWidth (默认正方形) 
+            // 或者 尝试寻找 TotalHeight 的因数？
+            
+            // 让我们简单点：FrameHeight = TotalHeight / Math.round(TotalHeight / FrameWidth)
+            const w = totalWidth / cols;
+            const rows = Math.round(totalHeight / w); 
+            const h = totalHeight / (rows || 1);
+            
+            spriteViewport.style.width = `${w}px`;
+            spriteViewport.style.height = `${h}px`;
+            
+            // 触发一次缩放调整
+            const scale = parseFloat(scaleRange.value);
+            spriteViewport.parentElement.style.height = (h * scale) + 'px';
+
+            debugInfo.textContent = `尺寸: ${totalWidth}x${totalHeight}\n单帧: ${Math.round(w)}x${Math.round(h)}\n推断: ${cols}列 x ${rows}行`;
+            
+            return { w, h, frames };
+        }
+
+        function startAnimation() {
+            const loop = (timestamp) => {
+                if (!lastTime) lastTime = timestamp;
+                const fps = parseInt(fpsInput.value) || 12;
+                const interval = 1000 / fps;
+                
+                if (timestamp - lastTime > interval) {
+                    const { w, h, frames } = updateInfo();
+                    const cols = parseInt(colInput.value) || 1;
+                    
+                    // 计算偏移
+                    const col = currentFrame % cols;
+                    const row = Math.floor(currentFrame / cols);
+                    
+                    spriteViewport.style.backgroundPosition = `-${col * w}px -${row * h}px`;
+                    
+                    currentFrame = (currentFrame + 1) % frames;
+                    lastTime = timestamp;
+                }
+                
+                animationId = requestAnimationFrame(loop);
+            };
+            animationId = requestAnimationFrame(loop);
+        }
+    </script>
+</body>
+</html>
