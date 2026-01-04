@@ -32,18 +32,50 @@
             font-size: 2rem;
             margin-bottom: 20px;
         }
+        .selector {
+            margin-bottom: 25px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .selector button {
+            padding: 8px 20px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #555;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .selector button.active {
+            background: #0288d1;
+            color: white;
+            border-color: #0288d1;
+            box-shadow: 0 2px 8px rgba(2, 136, 209, 0.3);
+        }
+        .selector button:hover:not(.active) {
+            background: #f8f9fa;
+            border-color: #ccc;
+        }
         .image-wrapper {
             background-color: #f8f9fa;
             border-radius: 12px;
             padding: 10px;
             display: inline-block;
             border: 1px solid #e1e4e8;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         img {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
             display: block;
+            max-height: 60vh;
         }
         .info {
             color: #7f8c8d;
@@ -60,6 +92,7 @@
             font-size: 0.9rem;
             margin-top: 10px;
             font-weight: 500;
+            margin-right: 5px;
         }
         .back-link {
             margin-top: 30px;
@@ -83,8 +116,12 @@
     <div class="container">
         <h1>WebP 动图独立展示</h1>
         
+        <div class="selector" id="fileSelector">
+            <!-- 按钮将由 JS 生成 -->
+        </div>
+        
         <div class="image-wrapper">
-            <img src="cat_lick.webp" alt="Cat Lick WebP Animation">
+            <img id="mainImage" src="" alt="WebP Animation">
         </div>
         
         <div>
@@ -92,13 +129,69 @@
             <span class="tag">无损压缩</span>
         </div>
 
-        <div class="info">
-            文件名称: cat_lick.webp<br>
-            文件大小: ~22MB
+        <div class="info" id="fileInfo">
+            <!-- 信息将由 JS 更新 -->
         </div>
 
         <a href="index.html" class="back-link">← 返回素材列表</a>
     </div>
+
+    <script>
+        // 定义文件列表
+        const files = [
+            { 
+                filename: 'cat_lick.webp', 
+                label: '小猫舔舐 (Lick)', 
+                size: '~22MB' 
+            },
+            { 
+                filename: 'cat_meow.webp', 
+                label: '小猫喵喵 (Meow)', 
+                size: '~7.0MB' 
+            }
+        ];
+
+        const selectorEl = document.getElementById('fileSelector');
+        const imgEl = document.getElementById('mainImage');
+        const infoEl = document.getElementById('fileInfo');
+
+        // 初始化
+        let currentIndex = 0;
+
+        function loadFile(index) {
+            currentIndex = index;
+            const file = files[index];
+            
+            // 更新图片
+            imgEl.src = file.filename;
+            imgEl.alt = file.label;
+            
+            // 更新信息
+            infoEl.innerHTML = `
+                文件名称: ${file.filename}<br>
+                文件大小: ${file.size}
+            `;
+            
+            // 更新按钮状态
+            renderButtons();
+        }
+
+        function renderButtons() {
+            selectorEl.innerHTML = '';
+            files.forEach((file, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = file.label;
+                if (index === currentIndex) {
+                    btn.classList.add('active');
+                }
+                btn.onclick = () => loadFile(index);
+                selectorEl.appendChild(btn);
+            });
+        }
+
+        // 启动
+        loadFile(0);
+
+    </script>
 </body>
 </html>
-
