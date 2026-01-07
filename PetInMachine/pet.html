@@ -382,6 +382,84 @@
         // 初始化状态机
         const pet = new PetStateMachine();
 
+        // WebSocket 连接处理
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host;
+            // 如果是直接打开文件，默认连本地 8080
+            const wsUrl = host ? `${protocol}//${host}/ws` : 'ws://localhost:8080/ws';
+            
+            console.log(`[WS] Connecting to ${wsUrl}...`);
+            const socket = new WebSocket(wsUrl);
+
+            socket.onopen = function(e) {
+                console.log("[WS] Connection established");
+                const statusBadge = document.getElementById('debugStatus');
+                if (statusBadge) statusBadge.style.borderColor = '#4caf50'; // Green border
+            };
+
+            socket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'command') {
+                        console.log(`[WS] Received command: ${data.command} (${data.text})`);
+                        handleVoiceCommand(data.command);
+                    }
+                } catch (e) {
+                    console.error("[WS] Error parsing message:", e);
+                }
+            };
+
+            socket.onclose = function(event) {
+                if (event.wasClean) {
+                    console.log(`[WS] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+                } else {
+                    console.log('[WS] Connection died');
+                }
+                // 尝试重连
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            socket.onerror = function(error) {
+                console.error(`[WS] Error: ${error.message}`);
+            };
+        }
+
+        function handleVoiceCommand(cmdName) {
+            // 映射后端指令到前端状态
+            // CatCommandType names: MEOW, WAKE_UP, SIT, STAND, COME, LICK, STOP, UNKNOWN
+            switch (cmdName) {
+                case 'MEOW':
+                    pet.transition(States.MEOW);
+                    break;
+                case 'WAKE_UP':
+                    // 唤醒时切回 IDLE 或做一个特定动作
+                    pet.transition(States.IDLE);
+                    break;
+                case 'SIT':
+                    pet.transition(States.IDLE); // 暂时没有坐下动画
+                    break;
+                case 'STAND':
+                    pet.transition(States.IDLE);
+                    break;
+                case 'COME':
+                    pet.transition(States.MEOW2); // 过来时喵一声
+                    break;
+                case 'LICK':
+                    pet.transition(States.LICK);
+                    break;
+                case 'STOP':
+                    pet.transition(States.IDLE);
+                    break;
+                default:
+                    console.log(`[WS] Unknown command mapping: ${cmdName}`);
+                    break;
+            }
+        }
+
+        // 启动 WebSocket 连接
+        connectWebSocket();
+
         // 键盘事件监听
         document.addEventListener('keydown', (event) => {
             switch(event.key) {
