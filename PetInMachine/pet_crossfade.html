@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebP 电子宠物</title>
+    <title>WebP 电子宠物 (淡入淡出版)</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -37,19 +37,26 @@
             border-radius: 12px;
             padding: 20px;
             border: 2px solid #e1e4e8;
-            min-height: 300px;
+            height: 400px; /* 固定高度，适应绝对定位的图片 */
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
             position: relative;
+            overflow: hidden;
         }
         .pet-screen img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             max-width: 100%;
-            max-height: 400px;
+            max-height: 100%;
             height: auto;
+            width: auto;
             border-radius: 8px;
-            display: block;
+            transition: opacity 0.3s ease;
+            backface-visibility: hidden; /* 优化渲染 */
         }
         /* 全屏模式样式 */
         .pet-screen:fullscreen {
@@ -70,6 +77,9 @@
             height: auto;
             object-fit: contain;
             border-radius: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
         .pet-screen:fullscreen .status-badge {
             display: none;
@@ -136,7 +146,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🐱 桌面电子猫</h1>
+        <h1>🐱 桌面电子猫 (Cross-fade)</h1>
         
         <div class="pet-screen">
             <span class="status-badge" id="debugStatus">STATE: IDLE</span>
@@ -158,79 +168,6 @@
     </div>
 
     <script>
-        // WebP 持续时间解析工具
-        async function getWebPDuration(url) {
-            try {
-                // 检查是否是 file 协议
-                if (window.location.protocol === 'file:') {
-                    console.warn(`[WARNING] 当前是 file:// 协议，浏览器可能阻止读取 ${url}。建议使用 'python3 -m http.server' 启动本地服务器。`);
-                }
-
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const buffer = await response.arrayBuffer();
-                const data = new Uint8Array(buffer);
-                let offset = 0;
-
-                // Check RIFF
-                if (getStr(data, 0, 4) !== 'RIFF') {
-                    console.error(`[ERROR] ${url} is not a valid RIFF file.`);
-                    return 0;
-                }
-                offset += 4;
-                
-                // File size
-                offset += 4; 
-                
-                // Check WEBP
-                if (getStr(data, offset, 4) !== 'WEBP') {
-                    console.error(`[ERROR] ${url} is not a valid WEBP file.`);
-                    return 0;
-                }
-                offset += 4;
-
-                let totalDuration = 0;
-                let frameCount = 0;
-
-                while (offset < data.length) {
-                    const chunkId = getStr(data, offset, 4);
-                    offset += 4;
-                    const chunkSize = getUInt32(data, offset);
-                    offset += 4;
-                    
-                    // Chunk size is padded to even
-                    const nextChunkOffset = offset + chunkSize + (chunkSize % 2);
-
-                    if (chunkId === 'ANMF') {
-                        frameCount++;
-                        // Duration is at offset + 12 (3 bytes)
-                        if (offset + 15 <= data.length) {
-                            const duration = data[offset + 12] | (data[offset + 13] << 8) | (data[offset + 14] << 16);
-                            totalDuration += duration;
-                        }
-                    }
-                    
-                    offset = nextChunkOffset;
-                }
-                
-                console.log(`[DEBUG] Parsed ${url}: ${frameCount} frames, ${totalDuration}ms`);
-                return totalDuration;
-            } catch (e) {
-                console.error(`[ERROR] Failed to parse duration for ${url}:`, e);
-                return 0;
-            }
-        }
-
-        function getStr(data, offset, length) {
-            return String.fromCharCode.apply(null, data.slice(offset, offset + length));
-        }
-
-        function getUInt32(data, offset) {
-            return data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24);
-        }
-
         // 状态定义
         const States = {
             IDLE: 'IDLE',
@@ -241,54 +178,39 @@
 
         // 资源映射
         const Assets = {
-            [States.IDLE]: { src: 'cat_blink_loop.webp', duration: 0 },
-            [States.MEOW]: { src: 'cat_meow_loop.webp', duration: 0 },
-            [States.MEOW2]: { src: 'cat_meow2_loop.webp', duration: 0 },
-            [States.LICK]: { src: 'cat_lick_loop.webp', duration: 0 }
+            [States.IDLE]: { src: 'cat_blink_loop.webp' },
+            [States.MEOW]: { src: 'cat_meow_loop.webp' },
+            [States.MEOW2]: { src: 'cat_meow2_loop.webp' },
+            [States.LICK]: { src: 'cat_lick_loop.webp' }
         };
 
-        // 简单的状态机类
+        // 状态机类 - 使用 Cross-fade 切换
         class PetStateMachine {
             constructor() {
                 this.currentState = States.IDLE;
-                this.imgElement = document.getElementById('petImage');
+                this.container = document.querySelector('.pet-screen');
                 this.statusElement = document.getElementById('debugStatus');
-                this.containerElement = document.querySelector('.pet-screen');
                 
-                this.currentLoopStart = 0;
-                this.transitionTimer = null;
-                this.pendingState = null;
-
-                // 初始化资源时长
-                this.initDurations().then(() => {
-                    console.log("Durations loaded:", Assets);
-                });
+                // 获取初始图片作为当前活动图片
+                this.currentImg = document.getElementById('petImage');
                 
-                // 监听图片加载完成，重置循环计时
-                this.imgElement.onload = () => {
-                    this.currentLoopStart = Date.now();
-                    console.log(`[DEBUG] Image loaded: ${this.imgElement.src}`);
-                    console.log(`[DEBUG] Reset loop timer at: ${this.currentLoopStart}`);
-                };
-
+                // 预加载图片资源，避免切换时卡顿
+                this.preloadImages();
+                
                 // 初始化显示
-                this.updateView();
+                this.statusElement.textContent = `STATE: ${this.currentState}`;
             }
 
-            async initDurations() {
-                for (const key in Assets) {
-                    const asset = Assets[key];
-                    if (asset.src) {
-                        const duration = await getWebPDuration(asset.src);
-                        asset.duration = duration;
-                        console.log(`[DEBUG] Duration for ${key} (${asset.src}): ${duration}ms`);
-                    }
-                }
+            preloadImages() {
+                Object.values(Assets).forEach(asset => {
+                    const img = new Image();
+                    img.src = asset.src;
+                });
             }
 
             toggleFullscreen() {
                 if (!document.fullscreenElement) {
-                    this.containerElement.requestFullscreen().catch(err => {
+                    this.container.requestFullscreen().catch(err => {
                         console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
                     });
                 } else {
@@ -297,85 +219,43 @@
             }
 
             transition(newState) {
-                if (this.currentState === newState) {
-                    // 如果已经在转换到这个状态，不需要做什么
-                    if (this.pendingState === newState) {
-                        console.log(`[DEBUG] Already pending transition to ${newState}, ignoring.`);
-                        return;
-                    }
-                    // 如果当前就是这个状态且没有pending，也忽略
-                    if (!this.pendingState) {
-                        console.log(`[DEBUG] Already in state ${newState}, ignoring.`);
-                        return;
-                    }
-                }
+                // 如果已经在该状态，无需切换
+                if (this.currentState === newState) return;
                 
-                console.log(`[DEBUG] Request transition: ${this.currentState} -> ${newState}`);
-
-                // 取消之前的待定转换
-                if (this.transitionTimer) {
-                    console.log(`[DEBUG] Cancelling previous pending transition to ${this.pendingState}`);
-                    clearTimeout(this.transitionTimer);
-                    this.transitionTimer = null;
-                }
-
-                this.pendingState = newState;
-                const currentAsset = Assets[this.currentState];
-                
-                // 如果没有时长信息，或者时长为0，直接切换
-                if (!currentAsset || !currentAsset.duration) {
-                    console.log(`[DEBUG] No duration info for ${this.currentState}, switching immediately.`);
-                    this.performTransition(newState);
-                    return;
-                }
-                
-                // 计算剩余时间
-                const now = Date.now();
-                const elapsed = now - this.currentLoopStart;
-                const duration = currentAsset.duration;
-                // 取模获取当前循环内的位置
-                const phase = elapsed % duration;
-                const remaining = duration - phase;
-
-                console.log(`[DEBUG] Waiting for loop finish...`);
-                console.log(`  - Current State: ${this.currentState}`);
-                console.log(`  - Start Time: ${this.currentLoopStart}`);
-                console.log(`  - Now: ${now}`);
-                console.log(`  - Elapsed: ${elapsed}ms`);
-                console.log(`  - Duration: ${duration}ms`);
-                console.log(`  - Phase (Elapsed % Duration): ${phase}ms`);
-                console.log(`  - Remaining: ${remaining}ms`);
-
-                // 设置定时器在当前循环结束后切换
-                this.transitionTimer = setTimeout(() => {
-                    console.log(`[DEBUG] Timer fired! Executing transition to ${newState}`);
-                    this.performTransition(newState);
-                }, remaining);
-                
-                // 更新UI显示等待状态 (可选)
-                this.statusElement.textContent = `WAITING... (${Math.round(remaining)}ms)`;
-            }
-
-            performTransition(newState) {
+                console.log(`[TRANSITION] ${this.currentState} -> ${newState}`);
                 this.currentState = newState;
-                this.pendingState = null;
-                this.transitionTimer = null;
-                
-                console.log(`[DEBUG] Executing transition to ${newState}`);
-                this.updateView();
-            }
+                this.statusElement.textContent = `STATE: ${newState}`;
 
-            updateView() {
-                const asset = Assets[this.currentState];
-                if (asset) {
-                    // 如果src相同，重新赋值可能导致重播，视需求而定。
-                    // 这里通常是切换不同图片，所以没问题。
-                    // 如果是从 A -> A，可能会重置。
-                    if (this.imgElement.getAttribute('src') !== asset.src) {
-                         this.imgElement.src = asset.src;
-                    }
-                    this.statusElement.textContent = `STATE: ${this.currentState}`;
+                const nextSrc = Assets[newState].src;
+                
+                // 1. 创建新图片元素
+                const nextImg = document.createElement('img');
+                nextImg.src = nextSrc;
+                nextImg.alt = "Pet";
+                nextImg.style.opacity = '0'; // 初始透明
+                
+                // 2. 插入到容器中
+                this.container.appendChild(nextImg);
+                
+                // 3. 强制浏览器重绘 (Reflow)，确保 opacity: 0 生效
+                nextImg.offsetHeight; 
+                
+                // 4. 执行淡入淡出
+                nextImg.style.opacity = '1'; // 新图淡入
+                if (this.currentImg) {
+                    this.currentImg.style.opacity = '0'; // 旧图淡出
                 }
+                
+                // 5. 清理旧图
+                const oldImg = this.currentImg;
+                this.currentImg = nextImg; // 更新引用
+                
+                // 等待 transition (0.3s) 结束后移除旧元素
+                setTimeout(() => {
+                    if (oldImg && oldImg.parentNode) {
+                        oldImg.parentNode.removeChild(oldImg);
+                    }
+                }, 300); // 这里的时间必须与 CSS transition 时间一致
             }
         }
 

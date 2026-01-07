@@ -36,6 +36,9 @@ async def websocket_handler(request):
 async def index_handler(request):
     return web.FileResponse('./pet.html')
 
+async def crossfade_handler(request):
+    return web.FileResponse('./pet_crossfade.html')
+
 async def static_handler(request):
     # 处理静态资源 (webp 图片等)
     filename = request.match_info['filename']
@@ -82,6 +85,7 @@ async def start_server():
     app = web.Application()
     app.add_routes([
         web.get('/', index_handler),
+        web.get('/crossfade', crossfade_handler),
         web.get('/ws', websocket_handler),
         web.get('/{filename}', static_handler) # 简单的静态文件服务
     ])
