@@ -10,8 +10,8 @@ from qwen_agent.llm.fncall_prompts.nous_fncall_prompt import (
 )
 from transformers.models.qwen2_vl.image_processing_qwen2_vl_fast import smart_resize
 
-from lhp_utils.lhp_agent_function_call import ComputerUse
-from lhp_utils.cv_utils import capture_screen_and_save
+from computer_agent_utils.computer_agent_function_call import ComputerUse
+from computer_agent_utils.cv_utils import capture_screen_and_save
 
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
