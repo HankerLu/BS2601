@@ -168,7 +168,7 @@ def main():
     Main function to execute GUI grounding example in a closed loop
     """
     # Example usage
-    user_query = "type 'hello' in the cursor agent window and send the message"
+    user_query = "Please click on the WeChat icon in the top macOS menu bar to open the main WeChat window."
     model_id = "qwen-vl-max-latest"
     
     print(f"Task: {user_query}")
