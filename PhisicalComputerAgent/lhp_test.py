@@ -3,7 +3,6 @@ import json
 import base64
 from openai import OpenAI
 from PIL import Image
-from IPython.display import display
 from qwen_agent.llm.fncall_prompts.nous_fncall_prompt import (
     NousFnCallPrompt,
     Message,
@@ -12,6 +11,7 @@ from qwen_agent.llm.fncall_prompts.nous_fncall_prompt import (
 from transformers.models.qwen2_vl.image_processing_qwen2_vl_fast import smart_resize
 
 from lhp_utils.lhp_agent_function_call import ComputerUse
+from lhp_utils.cv_utils import capture_screen_and_save
 
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
@@ -107,15 +107,23 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     )
     
     output_text = completion.choices[0].message.content
-    print(output_text)
+
 
     # Parse action and visualize
-    action = json.loads(output_text.split('<tool_call>\n')[1].split('\n</tool_call>')[0])
-    coordinate_relative = action['arguments']['coordinate']
-    coordinate_absolute = [coordinate_relative[0] / 1000 * resized_width, coordinate_relative[1] / 1000 * resized_height]
+    try:
+        tool_call_content = output_text.split('<tool_call>\n')[1].split('\n</tool_call>')[0]
+        action = json.loads(tool_call_content)
+        
+        display_image = input_image.resize((resized_width, resized_height))
 
-    display_image = input_image.resize((resized_width, resized_height))
-    display_image = draw_point(display_image, coordinate_absolute, color='green')
+        if 'arguments' in action and 'coordinate' in action['arguments']:
+            coordinate_relative = action['arguments']['coordinate']
+            coordinate_absolute = [coordinate_relative[0] / 1000 * resized_width, coordinate_relative[1] / 1000 * resized_height]
+            display_image = draw_point(display_image, coordinate_absolute, color='green')
+            
+    except (IndexError, json.JSONDecodeError, KeyError) as e:
+        print(f"Warning: Could not parse tool call or coordinates from output. Error: {e}")
+        display_image = input_image.resize((resized_width, resized_height))
     
     return output_text, display_image
 
@@ -159,15 +167,47 @@ def main():
     Main function to execute GUI grounding example
     """
     # Example usage
+    # 截图并保存
+    screenshot_path = "imgs/screen.png"
+    success, scale = capture_screen_and_save(save_path=screenshot_path)
+    if not success:
+        print("截图失败")
+        return
+
     # screenshot = "./computer_use2.jpeg"
-    screenshot = "./test_pic_1.png"
-    user_query = 'Output the text related to model introduction'
+    # screenshot = "./test_pic_1.png"
+    screenshot = screenshot_path
+    user_query = "type 'hello' in the cursor agent window and send the message"
     model_id = "qwen-vl-max-latest"
     output_text, display_image = perform_gui_grounding_with_api(screenshot, user_query, model_id)
 
     # Display results
     print(output_text)
-    display(display_image)
+    # display(display_image)
+    # display_image.show()
+
+    # Execute the action using ComputerUse
+    try:
+        if '<tool_call>' in output_text:
+            tool_call_content = output_text.split('<tool_call>\n')[1].split('\n</tool_call>')[0]
+            action_data = json.loads(tool_call_content)
+            
+            print(f"Executing action: {action_data}")
+            
+            # Extract arguments if present
+            if 'arguments' in action_data:
+                action_params = action_data['arguments']
+            else:
+                action_params = action_data
+
+            # Initialize computer use tool with the same resolution config as used in prompt
+            computer_use = ComputerUse(cfg={"display_width_px": 1000, "display_height_px": 1000})
+            result = computer_use.call(action_params)
+            print(f"Execution Result: {result}")
+        else:
+            print("No tool call found in output.")
+    except Exception as e:
+        print(f"Error executing action: {e}")
 
 
 if __name__ == "__main__":

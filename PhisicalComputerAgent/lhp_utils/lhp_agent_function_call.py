@@ -1,7 +1,14 @@
 from typing import Union, Tuple, List
+import pyautogui
+import time
+import platform
+import os
 
 from qwen_agent.tools.base import BaseTool, register_tool
 
+# Set pyautogui safety delay
+pyautogui.PAUSE = 0.5
+pyautogui.FAILSAFE = True
 
 @register_tool("mobile_use")
 class MobileUse(BaseTool):
@@ -228,60 +235,146 @@ The action to perform. The available actions are:
     def __init__(self, cfg=None):
         self.display_width_px = cfg["display_width_px"]
         self.display_height_px = cfg["display_height_px"]
+        
+        # 获取实际屏幕尺寸
+        try:
+            self.screen_width, self.screen_height = pyautogui.size()
+        except Exception:
+            self.screen_width, self.screen_height = 1920, 1080  # Default fallback
+            
         super().__init__(cfg)
+
+    def _map_coordinates(self, x, y):
+        """Map normalized coordinates (if model uses them) or logical coordinates to actual screen coordinates"""
+        # 如果模型输出是基于 1000x1000 的归一化坐标，这里需要映射
+        # 假设传入的 x, y 是基于 self.display_width_px, self.display_height_px 的
+        
+        # 计算比例
+        scale_x = self.screen_width / self.display_width_px
+        scale_y = self.screen_height / self.display_height_px
+        
+        real_x = int(x * scale_x)
+        real_y = int(y * scale_y)
+        
+        # 边界检查
+        real_x = max(0, min(real_x, self.screen_width - 1))
+        real_y = max(0, min(real_y, self.screen_height - 1))
+        
+        return real_x, real_y
 
     def call(self, params: Union[str, dict], **kwargs):
         params = self._verify_json_format_args(params)
         action = params["action"]
-        if action in ["left_click", "right_click", "middle_click", "double_click","triple_click"]:
-            return self._mouse_click(action)
-        elif action == "key":
-            return self._key(params["keys"])
-        elif action == "type":
-            return self._type(params["text"])
-        elif action == "mouse_move":
-            return self._mouse_move(params["coordinate"])
-        elif action == "left_click_drag":
-            return self._left_click_drag(params["coordinate"])
-        elif action == "scroll":
-            return self._scroll(params["pixels"])
-        elif action == "hscroll":
-            return self._hscroll(params["pixels"])
-        elif action == "answer":
-            return self._answer(params["text"])
-        elif action == "wait":
-            return self._wait(params["time"])
-        elif action == "terminate":
-            return self._terminate(params["status"])
-        else:
-            raise ValueError(f"Invalid action: {action}")
+        
+        try:
+            if action in ["left_click", "right_click", "middle_click", "double_click", "triple_click"]:
+                return self._mouse_click(action, params.get("coordinate"))
+            elif action == "key":
+                return self._key(params.get("keys", []))
+            elif action == "type":
+                return self._type(params.get("text", ""))
+            elif action == "mouse_move":
+                return self._mouse_move(params.get("coordinate"))
+            elif action == "left_click_drag":
+                return self._left_click_drag(params.get("coordinate"))
+            elif action == "scroll":
+                return self._scroll(params.get("pixels", 0))
+            elif action == "hscroll":
+                return self._hscroll(params.get("pixels", 0))
+            elif action == "answer":
+                return self._answer(params.get("text", ""))
+            elif action == "wait":
+                return self._wait(params.get("time", 0.5))
+            elif action == "terminate":
+                return self._terminate(params.get("status", "success"))
+            else:
+                raise ValueError(f"Invalid action: {action}")
+        except Exception as e:
+            return f"Error executing action {action}: {str(e)}"
 
-    def _mouse_click(self, button: str):
-        raise NotImplementedError()
+    def _mouse_click(self, button_action: str, coordinate: Tuple[int, int] = None):
+        if coordinate:
+            real_x, real_y = self._map_coordinates(coordinate[0], coordinate[1])
+            pyautogui.moveTo(real_x, real_y)
+            
+        button_map = {
+            "left_click": "left",
+            "right_click": "right",
+            "middle_click": "middle",
+            "double_click": "left",
+            "triple_click": "left"
+        }
+        
+        btn = button_map.get(button_action, "left")
+        
+        if button_action == "double_click":
+            pyautogui.doubleClick(button=btn)
+        elif button_action == "triple_click":
+            pyautogui.tripleClick(button=btn)
+        else:
+            pyautogui.click(button=btn)
+            
+        return f"Performed {button_action} at {coordinate if coordinate else 'current position'}"
 
     def _key(self, keys: List[str]):
-        raise NotImplementedError()
+        # 处理按键映射，pyautogui 的键名可能与传入的不同
+        # 这里假设 keys 是 standard keys
+        for key in keys:
+            # 特殊处理 mac 的 command 键
+            if key.lower() in ["meta", "super", "command", "cmd"]:
+                if platform.system() == "Darwin":
+                    key = "command"
+                else:
+                    key = "win" # Windows key
+            
+            pyautogui.press(key)
+        return f"Pressed keys: {keys}"
 
     def _type(self, text: str):
-        raise NotImplementedError()
+        pyautogui.write(text, interval=0.01)
+        return f"Typed text: {text}"
 
     def _mouse_move(self, coordinate: Tuple[int, int]):
-        raise NotImplementedError()
+        if coordinate:
+            real_x, real_y = self._map_coordinates(coordinate[0], coordinate[1])
+            pyautogui.moveTo(real_x, real_y)
+            return f"Moved mouse to {coordinate}"
+        return "No coordinate provided for move"
 
     def _left_click_drag(self, coordinate: Tuple[int, int]):
-        raise NotImplementedError()
+        if coordinate:
+            real_x, real_y = self._map_coordinates(coordinate[0], coordinate[1])
+            pyautogui.dragTo(real_x, real_y, button='left')
+            return f"Dragged mouse to {coordinate}"
+        return "No coordinate provided for drag"
 
     def _scroll(self, pixels: int):
-        raise NotImplementedError()
+        # pyautogui scroll amounts differ by OS
+        # On Mac, scroll amount is small?
+        if pixels:
+            pyautogui.scroll(int(pixels))
+            return f"Scrolled {pixels} pixels"
+        return "No scroll amount provided"
 
     def _hscroll(self, pixels: int):
-        raise NotImplementedError()
+        if pixels:
+            # Windows/Linux doesn't strictly support hscroll in base pyautogui without specific drivers sometimes, 
+            # but usually hscroll() exists for horizontal
+            try:
+                pyautogui.hscroll(int(pixels))
+                return f"Horizontally scrolled {pixels} pixels"
+            except AttributeError:
+                return "Horizontal scroll not supported on this platform/pyautogui version"
+        return "No hscroll amount provided"
 
     def _answer(self, text: str):
-        raise NotImplementedError()
+        print(f"ANSWER: {text}")
+        return f"Answered: {text}"
 
-    def _wait(self, time: int):
-        raise NotImplementedError()
+    def _wait(self, time_sec: float):
+        time.sleep(time_sec)
+        return f"Waited {time_sec} seconds"
 
     def _terminate(self, status: str):
-        raise NotImplementedError()
+        print(f"TERMINATING TASK: {status}")
+        return f"Terminated with status: {status}"
