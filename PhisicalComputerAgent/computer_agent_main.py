@@ -1,6 +1,7 @@
 import os
 import json
 import base64
+import time
 from openai import OpenAI
 from PIL import Image
 from qwen_agent.llm.fncall_prompts.nous_fncall_prompt import (
@@ -164,50 +165,67 @@ def draw_point(image: Image.Image, point: list, color=None):
 
 def main():
     """
-    Main function to execute GUI grounding example
+    Main function to execute GUI grounding example in a closed loop
     """
     # Example usage
-    # 截图并保存
-    screenshot_path = "imgs/screen.png"
-    success, scale = capture_screen_and_save(save_path=screenshot_path)
-    if not success:
-        print("截图失败")
-        return
-
-    # screenshot = "./computer_use2.jpeg"
-    # screenshot = "./test_pic_1.png"
-    screenshot = screenshot_path
     user_query = "type 'hello' in the cursor agent window and send the message"
     model_id = "qwen-vl-max-latest"
-    output_text, display_image = perform_gui_grounding_with_api(screenshot, user_query, model_id)
+    
+    print(f"Task: {user_query}")
+    print("Starting closed loop agent. Press Ctrl+C to stop.")
 
-    # Display results
-    print(output_text)
-    # display(display_image)
-    # display_image.show()
-
-    # Execute the action using ComputerUse
     try:
-        if '<tool_call>' in output_text:
-            tool_call_content = output_text.split('<tool_call>\n')[1].split('\n</tool_call>')[0]
-            action_data = json.loads(tool_call_content)
-            
-            print(f"Executing action: {action_data}")
-            
-            # Extract arguments if present
-            if 'arguments' in action_data:
-                action_params = action_data['arguments']
-            else:
-                action_params = action_data
+        while True:
+            # 截图并保存
+            screenshot_path = "imgs/screen.png"
+            success, scale = capture_screen_and_save(save_path=screenshot_path)
+            if not success:
+                print("截图失败")
+                time.sleep(1)
+                continue
 
-            # Initialize computer use tool with the same resolution config as used in prompt
-            computer_use = ComputerUse(cfg={"display_width_px": 1000, "display_height_px": 1000})
-            result = computer_use.call(action_params)
-            print(f"Execution Result: {result}")
-        else:
-            print("No tool call found in output.")
-    except Exception as e:
-        print(f"Error executing action: {e}")
+            # screenshot = "./computer_use2.jpeg"
+            # screenshot = "./test_pic_1.png"
+            screenshot = screenshot_path
+            
+            try:
+                output_text, display_image = perform_gui_grounding_with_api(screenshot, user_query, model_id)
+
+                # Display results
+                print(f"\nModel Output: {output_text}")
+                # display(display_image)
+                # display_image.show()
+
+                # Execute the action using ComputerUse
+                if '<tool_call>' in output_text:
+                    tool_call_content = output_text.split('<tool_call>\n')[1].split('\n</tool_call>')[0]
+                    action_data = json.loads(tool_call_content)
+                    
+                    print(f"Executing action: {action_data}")
+                    
+                    # Extract arguments if present
+                    if 'arguments' in action_data:
+                        action_params = action_data['arguments']
+                    else:
+                        action_params = action_data
+
+                    # Initialize computer use tool with the same resolution config as used in prompt
+                    computer_use = ComputerUse(cfg={"display_width_px": 1000, "display_height_px": 1000})
+                    result = computer_use.call(action_params)
+                    print(f"Execution Result: {result}")
+                    
+                    # Small delay to let the action take effect
+                    time.sleep(1)
+                else:
+                    print("No tool call found in output.")
+                    time.sleep(2)
+
+            except Exception as e:
+                print(f"Error in loop iteration: {e}")
+                time.sleep(1)
+
+    except KeyboardInterrupt:
+        print("\nStopped by user.")
 
 
 if __name__ == "__main__":
