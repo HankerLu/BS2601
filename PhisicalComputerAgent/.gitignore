@@ -2,3 +2,6 @@ exampleCode/
 *.png
 *.jpeg
 *.jpg
+logs/
+__pycache__/
+.DS_Store

@@ -2,6 +2,8 @@ import os
 import json
 import base64
 import time
+import shutil
+from datetime import datetime
 from openai import OpenAI
 from PIL import Image
 from qwen_agent.llm.fncall_prompts.nous_fncall_prompt import (
@@ -62,8 +64,9 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     )
     
     # Initialize computer use function
+    img_width, img_height = input_image.size
     computer_use = ComputerUse(
-        cfg={"display_width_px": 1000, "display_height_px": 1000}
+        cfg={"display_width_px": img_width, "display_height_px": img_height}
     )
 
     # Build messages
@@ -119,7 +122,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
 
         if 'arguments' in action and 'coordinate' in action['arguments']:
             coordinate_relative = action['arguments']['coordinate']
-            coordinate_absolute = [coordinate_relative[0] / 1000 * resized_width, coordinate_relative[1] / 1000 * resized_height]
+            coordinate_absolute = [coordinate_relative[0] / img_width * resized_width, coordinate_relative[1] / img_height * resized_height]
             display_image = draw_point(display_image, coordinate_absolute, color='green')
             
     except (IndexError, json.JSONDecodeError, KeyError) as e:
@@ -174,8 +177,23 @@ def main():
     print(f"Task: {user_query}")
     print("Starting closed loop agent. Press Ctrl+C to stop.")
 
+    # Create log directory with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_dir = os.path.join("logs", f"run_{timestamp}")
+    os.makedirs(log_dir, exist_ok=True)
+    print(f"Logging to: {log_dir}")
+    
+    # Initialize action history list
+    action_history = []
+    
+    step_count = 0
+
     try:
         while True:
+            step_count += 1
+            step_prefix = f"step_{step_count:03d}"
+            print(f"\n--- Step {step_count} ---")
+
             # 截图并保存
             screenshot_path = "imgs/screen.png"
             success, scale = capture_screen_and_save(save_path=screenshot_path)
@@ -183,20 +201,28 @@ def main():
                 print("截图失败")
                 time.sleep(1)
                 continue
+            
+            # Save screenshot to log
+            log_screenshot_path = os.path.join(log_dir, f"{step_prefix}_screen.png")
+            shutil.copy(screenshot_path, log_screenshot_path)
 
             # screenshot = "./computer_use2.jpeg"
             # screenshot = "./test_pic_1.png"
             screenshot = screenshot_path
             
+            with Image.open(screenshot) as img:
+                img_width, img_height = img.size
+            
             try:
                 output_text, display_image = perform_gui_grounding_with_api(screenshot, user_query, model_id)
 
                 # Display results
-                print(f"\nModel Output: {output_text}")
+                print(f"Model Output: {output_text}")
                 # display(display_image)
                 # display_image.show()
 
                 # Execute the action using ComputerUse
+                action_data = None
                 if '<tool_call>' in output_text:
                     tool_call_content = output_text.split('<tool_call>\n')[1].split('\n</tool_call>')[0]
                     action_data = json.loads(tool_call_content)
@@ -210,7 +236,7 @@ def main():
                         action_params = action_data
 
                     # Initialize computer use tool with the same resolution config as used in prompt
-                    computer_use = ComputerUse(cfg={"display_width_px": 1000, "display_height_px": 1000})
+                    computer_use = ComputerUse(cfg={"display_width_px": img_width, "display_height_px": img_height})
                     result = computer_use.call(action_params)
                     print(f"Execution Result: {result}")
                     
@@ -219,6 +245,22 @@ def main():
                 else:
                     print("No tool call found in output.")
                     time.sleep(2)
+                
+                # Save log data
+                log_data = {
+                    "step": step_count,
+                    "timestamp": datetime.now().isoformat(),
+                    "model_output": output_text,
+                    "action_data": action_data
+                }
+                
+                # Update history and save to summary file
+                action_history.append(log_data)
+                with open(os.path.join(log_dir, "action_history.json"), "w", encoding="utf-8") as f:
+                    json.dump(action_history, f, indent=4, ensure_ascii=False)
+                
+                with open(os.path.join(log_dir, f"{step_prefix}_log.json"), "w", encoding="utf-8") as f:
+                    json.dump(log_data, f, indent=4, ensure_ascii=False)
 
             except Exception as e:
                 print(f"Error in loop iteration: {e}")

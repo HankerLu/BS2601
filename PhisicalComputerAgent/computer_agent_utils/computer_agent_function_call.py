@@ -182,7 +182,6 @@ The action to perform. The available actions are:
 * `hscroll`: Performs a horizontal scroll (mapped to regular scroll).
 * `wait`: Wait specified seconds for the change to happen.
 * `terminate`: Terminate the current task and report its completion status.
-* `answer`: Answer a question.
 """.strip(),
                 "enum": [
                     "key",
@@ -198,7 +197,6 @@ The action to perform. The available actions are:
                     "hscroll",
                     "wait",
                     "terminate",
-                    "answer",
                 ],
                 "type": "string",
             },
@@ -207,7 +205,7 @@ The action to perform. The available actions are:
                 "type": "array",
             },
             "text": {
-                "description": "Required only by `action=type` and `action=answer`.",
+                "description": "Required only by `action=type`.",
                 "type": "string",
             },
             "coordinate": {
@@ -281,8 +279,6 @@ The action to perform. The available actions are:
                 return self._scroll(params.get("pixels", 0))
             elif action == "hscroll":
                 return self._hscroll(params.get("pixels", 0))
-            elif action == "answer":
-                return self._answer(params.get("text", ""))
             elif action == "wait":
                 return self._wait(params.get("time", 0.5))
             elif action == "terminate":
@@ -366,10 +362,6 @@ The action to perform. The available actions are:
             except AttributeError:
                 return "Horizontal scroll not supported on this platform/pyautogui version"
         return "No hscroll amount provided"
-
-    def _answer(self, text: str):
-        print(f"ANSWER: {text}")
-        return f"Answered: {text}"
 
     def _wait(self, time_sec: float):
         time.sleep(time_sec)
