@@ -170,8 +170,25 @@ def main():
     """
     Main function to execute GUI grounding example in a closed loop
     """
+    # Load user query from config
+    user_query = "Please click on the WeChat icon in the top macOS menu bar to open the main WeChat window." # Default
+    try:
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_queries.json")
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+            selected_id = config.get("selected_query_id")
+            for q in config.get("queries", []):
+                if q["id"] == selected_id:
+                    user_query = q["query"]
+                    print(f"Loaded query ID {selected_id}: {q.get('description', '')}")
+                    break
+            else:
+                print(f"Warning: Query ID {selected_id} not found in config, using default.")
+    except Exception as e:
+        print(f"Warning: Could not load user_queries.json: {e}. Using default query.")
+
     # Example usage
-    user_query = "Please click on the WeChat icon in the top macOS menu bar to open the main WeChat window."
+    # user_query = "Please click on the WeChat icon in the top macOS menu bar to open the main WeChat window."
     model_id = "qwen-vl-max-latest"
     
     print(f"Task: {user_query}")

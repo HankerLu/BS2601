@@ -1,0 +1,25 @@
+{
+    "selected_query_id": 4,
+    "queries": [
+        {
+            "id": 1,
+            "description": "Open WeChat",
+            "query": "Please click on the WeChat icon in the top macOS menu bar to open the main WeChat window."
+        },
+        {
+            "id": 2,
+            "description": "Open System Settings",
+            "query": "Please click on the System Settings icon in the dock to open it."
+        },
+        {
+            "id": 3,
+            "description": "Check Calendar",
+            "query": "Please open the Calendar app and check today's schedule."
+        },
+        {
+            "id": 4,
+            "description": "Create Note with text",
+            "query": "Create a new iOS note and write 'Hello' in it."
+        }
+    ]
+}
