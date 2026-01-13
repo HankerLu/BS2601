@@ -3,6 +3,7 @@ import pyautogui
 import time
 import platform
 import os
+from datetime import datetime
 
 from qwen_agent.tools.base import BaseTool, register_tool
 
@@ -10,145 +11,6 @@ from qwen_agent.tools.base import BaseTool, register_tool
 pyautogui.PAUSE = 0.5
 pyautogui.FAILSAFE = True
 
-@register_tool("mobile_use")
-class MobileUse(BaseTool):
-    @property
-    def description(self):
-        return f"""
-Use a touchscreen to interact with a mobile device, and take screenshots.
-* This is an interface to a mobile device with touchscreen. You can perform actions like clicking, typing, swiping, etc.
-* Some applications may take time to start or process actions, so you may need to wait and take successive screenshots to see the results of your actions.
-* The screen's resolution is {self.display_width_px}x{self.display_height_px}.
-* Make sure to click any buttons, links, icons, etc with the cursor tip in the center of the element. Don't click boxes on their edges unless asked.
-""".strip()
-
-    parameters = {
-        "properties": {
-            "action": {
-                "description": """
-The action to perform. The available actions are:
-* `key`: Perform a key event on the mobile device.
-    - This supports adb's `keyevent` syntax.
-    - Examples: "volume_up", "volume_down", "power", "camera", "clear".
-* `click`: Click the point on the screen with coordinate (x, y).
-* `long_press`: Press the point on the screen with coordinate (x, y) for specified seconds.
-* `swipe`: Swipe from the starting point with coordinate (x, y) to the end point with coordinates2 (x2, y2).
-* `type`: Input the specified text into the activated input box.
-* `system_button`: Press the system button.
-* `open`: Open an app on the device.
-* `wait`: Wait specified seconds for the change to happen.
-* `terminate`: Terminate the current task and report its completion status.
-""".strip(),
-                "enum": [
-                    "key",
-                    "click",
-                    "long_press",
-                    "swipe",
-                    "type",
-                    "system_button",
-                    "open",
-                    "wait",
-                    "terminate",
-                ],
-                "type": "string",
-            },
-            "coordinate": {
-                "description": "(x, y): The x (pixels from the left edge) and y (pixels from the top edge) coordinates to move the mouse to. Required only by `action=click`, `action=long_press`, and `action=swipe`.",
-                "type": "array",
-            },
-            "coordinate2": {
-                "description": "(x, y): The x (pixels from the left edge) and y (pixels from the top edge) coordinates to move the mouse to. Required only by `action=swipe`.",
-                "type": "array",
-            },
-            "text": {
-                "description": "Required only by `action=key`, `action=type`, and `action=open`.",
-                "type": "string",
-            },
-            "time": {
-                "description": "The seconds to wait. Required only by `action=long_press` and `action=wait`.",
-                "type": "number",
-            },
-            "button": {
-                "description": "Back means returning to the previous interface, Home means returning to the desktop, Menu means opening the application background menu, and Enter means pressing the enter. Required only by `action=system_button`",
-                "enum": [
-                    "Back",
-                    "Home",
-                    "Menu",
-                    "Enter",
-                ],
-                "type": "string",
-            },
-            "status": {
-                "description": "The status of the task. Required only by `action=terminate`.",
-                "type": "string",
-                "enum": ["success", "failure"],
-            },
-        },
-        "required": ["action"],
-        "type": "object",
-    }
-
-    def __init__(self, cfg=None):
-        self.display_width_px = cfg["display_width_px"]
-        self.display_height_px = cfg["display_height_px"]
-        super().__init__(cfg)
-
-    def call(self, params: Union[str, dict], **kwargs):
-        params = self._verify_json_format_args(params)
-        action = params["action"]
-        if action == "key":
-            return self._key(params["text"])
-        elif action == "click":
-            return self._click(
-                coordinate=params["coordinate"]
-            )
-        elif action == "long_press":
-            return self._long_press(
-                coordinate=params["coordinate"], time=params["time"]
-            )
-        elif action == "swipe":
-            return self._swipe(
-                coordinate=params["coordinate"], coordinate2=params["coordinate2"]
-            )
-        elif action == "type":
-            return self._type(params["text"])
-        elif action == "system_button":
-            return self._system_button(params["button"])
-        elif action == "open":
-            return self._open(params["text"])
-        elif action == "wait":
-            return self._wait(params["time"])
-        elif action == "terminate":
-            return self._terminate(params["status"])
-        else:
-            raise ValueError(f"Unknown action: {action}")
-
-    def _key(self, text: str):
-        raise NotImplementedError()
-        
-    def _click(self, coordinate: Tuple[int, int]):
-        raise NotImplementedError()
-
-    def _long_press(self, coordinate: Tuple[int, int], time: int):
-        raise NotImplementedError()
-
-    def _swipe(self, coordinate: Tuple[int, int], coordinate2: Tuple[int, int]):
-        raise NotImplementedError()
-
-    def _type(self, text: str):
-        raise NotImplementedError()
-
-    def _system_button(self, button: str):
-        raise NotImplementedError()
-
-    def _open(self, text: str):
-        raise NotImplementedError()
-
-    def _wait(self, time: int):
-        raise NotImplementedError()
-
-    def _terminate(self, status: str):
-        raise NotImplementedError()
     
 @register_tool("computer_use")
 class ComputerUse(BaseTool):
@@ -156,9 +18,10 @@ class ComputerUse(BaseTool):
     def description(self):
         return f"""
 Use a mouse and keyboard to interact with a computer, and take screenshots.
+* The current screen content you are analyzing comes from a screenshot with a resolution of 1280x831.
 * This is an interface to a desktop GUI. You do not have access to a terminal or applications menu. You must click on desktop icons to start applications.
 * Some applications may take time to start or process actions, so you may need to wait and take successive screenshots to see the results of your actions. E.g. if you click on Firefox and a window doesn't open, try wait and taking another screenshot.
-* The screen's resolution is {self.display_width_px}x{self.display_height_px}.
+* IMPORTANT: All coordinates (x, y) MUST be normalized values between 0.0 and 1.0, where (0.0, 0.0) is the top-left and (1.0, 1.0) is the bottom-right.
 * Whenever you intend to move the cursor to click on an element like an icon, you should consult a screenshot to determine the coordinates of the element before moving the cursor.
 * If you tried clicking on a program or link but it failed to load, even after waiting, try adjusting your cursor position so that the tip of the cursor visually falls on the element that you want to click.
 * Make sure to click any buttons, links, icons, etc with the cursor tip in the center of the element. Don't click boxes on their edges.
@@ -209,7 +72,7 @@ The action to perform. The available actions are:
                 "type": "string",
             },
             "coordinate": {
-                "description": "(x, y): The x (pixels from the left edge) and y (pixels from the top edge) coordinates to move the mouse to.",
+                "description": "(x, y): The normalized x (0.0-1.0) and y (0.0-1.0) coordinates to move the mouse to.",
                 "type": "array",
             },
             "pixels": {
@@ -231,32 +94,44 @@ The action to perform. The available actions are:
     }
 
     def __init__(self, cfg=None):
-        self.display_width_px = cfg["display_width_px"]
-        self.display_height_px = cfg["display_height_px"]
-        
         # 获取实际屏幕尺寸
         try:
             self.screen_width, self.screen_height = pyautogui.size()
+            log_msg = f"Screen width: {self.screen_width}, Screen height: {self.screen_height}"
+            print(log_msg)
+            # Save to local log
+            try:
+                with open("screen_log.txt", "a", encoding="utf-8") as f:
+                    f.write(f"{datetime.now().isoformat()} - {log_msg}\n")
+            except Exception as e:
+                print(f"Failed to write to screen_log.txt: {e}")
         except Exception:
             self.screen_width, self.screen_height = 1920, 1080  # Default fallback
             
         super().__init__(cfg)
 
     def _map_coordinates(self, x, y):
-        """Map normalized coordinates (if model uses them) or logical coordinates to actual screen coordinates"""
-        # 如果模型输出是基于 1000x1000 的归一化坐标，这里需要映射
-        # 假设传入的 x, y 是基于 self.display_width_px, self.display_height_px 的
+        """Map normalized coordinates (0.0-1.0) to actual screen coordinates"""
+        # 模型输出是 0.0-1.0 的归一化坐标
         
-        # 计算比例
-        scale_x = self.screen_width / self.display_width_px
-        scale_y = self.screen_height / self.display_height_px
+        # 处理 VLM 幻觉导致的非归一化坐标
+        # 如果坐标值大于1，说明模型输出的是像素坐标，需要基于截图分辨率(1280x831)进行归一化
+        SCREENSHOT_WIDTH = 1280
+        SCREENSHOT_HEIGHT = 831
         
-        real_x = int(x * scale_x)
-        real_y = int(y * scale_y)
+        if x > 1.0:
+            x = x / SCREENSHOT_WIDTH
+        if y > 1.0:
+            y = y / SCREENSHOT_HEIGHT
+
+        # 直接映射到实际屏幕分辨率
+        real_x = int(x * self.screen_width)
+        real_y = int(y * self.screen_height)
         
         # 边界检查
-        real_x = max(0, min(real_x, self.screen_width - 1))
-        real_y = max(0, min(real_y, self.screen_height - 1))
+        safe_margin = 5  # 距离边缘5像素的安全边距
+        real_x = max(safe_margin, min(real_x, self.screen_width - safe_margin))
+        real_y = max(safe_margin, min(real_y, self.screen_height - safe_margin))
         
         return real_x, real_y
 

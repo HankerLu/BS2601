@@ -64,10 +64,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     )
     
     # Initialize computer use function
-    img_width, img_height = input_image.size
-    computer_use = ComputerUse(
-        cfg={"display_width_px": img_width, "display_height_px": img_height}
-    )
+    computer_use = ComputerUse()
 
     # Build messages
     system_message = NousFnCallPrompt().preprocess_fncall_messages(
@@ -122,7 +119,8 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
 
         if 'arguments' in action and 'coordinate' in action['arguments']:
             coordinate_relative = action['arguments']['coordinate']
-            coordinate_absolute = [coordinate_relative[0] / img_width * resized_width, coordinate_relative[1] / img_height * resized_height]
+            # coordinate_relative 是 0.0-1.0 的归一化坐标
+            coordinate_absolute = [coordinate_relative[0] * resized_width, coordinate_relative[1] * resized_height]
             display_image = draw_point(display_image, coordinate_absolute, color='green')
             
     except (IndexError, json.JSONDecodeError, KeyError) as e:
@@ -252,8 +250,8 @@ def main():
                     else:
                         action_params = action_data
 
-                    # Initialize computer use tool with the same resolution config as used in prompt
-                    computer_use = ComputerUse(cfg={"display_width_px": img_width, "display_height_px": img_height})
+                    # Initialize computer use tool
+                    computer_use = ComputerUse()
                     result = computer_use.call(action_params)
                     print(f"Execution Result: {result}")
                     
