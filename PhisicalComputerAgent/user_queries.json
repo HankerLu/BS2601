@@ -1,5 +1,5 @@
 {
-    "selected_query_id": 1,
+    "selected_query_id": 5,
     "queries": [
         {
             "id": 1,
@@ -20,6 +20,11 @@
             "id": 4,
             "description": "Create Note with text",
             "query": "Create a new iOS note and write 'Hello' in it."
+        },
+        {
+            "id": 5,
+            "description": "Open Apple Notes",
+            "query": "Please open the Apple Notes app (备忘录) from the dock or using Spotlight."
         }
     ]
 }

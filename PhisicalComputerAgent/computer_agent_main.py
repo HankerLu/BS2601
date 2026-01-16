@@ -35,7 +35,7 @@ def encode_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
-def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pixels=3136, max_pixels=12845056):
+def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, prev_screenshot_path=None, min_pixels=3136, max_pixels=12845056):
     """
     Perform GUI grounding using Qwen model to interpret user query on a screenshot.
     
@@ -43,6 +43,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
         screenshot_path (str): Path to the screenshot image
         user_query (str): User's query/instruction
         model: Preloaded Qwen model
+        prev_screenshot_path (str): Path to the previous screenshot image (optional)
         min_pixels: Minimum pixels for the image
         max_pixels: Maximum pixels for the image
         
@@ -65,6 +66,23 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     else:
         image_type = 'jpeg'  # Default to jpeg if unknown
     
+    # Process previous image if provided
+    prev_image_content = []
+    prompt_suffix = ""
+    if prev_screenshot_path and os.path.exists(prev_screenshot_path):
+        try:
+            prev_base64 = encode_image(prev_screenshot_path)
+            prev_ext = os.path.splitext(prev_screenshot_path)[1].lower()
+            prev_type = 'png' if prev_ext == '.png' else ('jpeg' if prev_ext in ['.jpg', '.jpeg'] else 'jpeg')
+            
+            prev_image_content.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/{prev_type};base64,{prev_base64}"},
+            })
+            prompt_suffix = "\n\n注意：第一张图片是上一步操作后的截图（用于参考），第二张图片是当前屏幕截图。请针对当前屏幕（第二张图）进行下一步操作。"
+        except Exception as e:
+            print(f"Warning: Failed to process previous screenshot: {e}")
+
     client = OpenAI(
         #If the environment variable is not configured, please replace the following line with the Dashscope API Key: api_key="sk-xxx". Access via https://bailian.console.alibabacloud.com/?apiKey=1 "
         api_key=Config.API_KEY,
@@ -84,7 +102,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     # Build messages
     system_message = NousFnCallPrompt().preprocess_fncall_messages(
         messages=[
-            Message(role="system", content=[ContentItem(text=f"你是一个能够操作电脑的AI助手。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。\n\n**重要步骤**：\n1. 首先，用自然语言详细描述你在截图上看到了什么，以及你打算做什么。\n2. 然后，生成相应的工具调用代码。\n\n**任务完成判断**：\n当你认为用户指派的任务已经完成时，请务必调用 `computer_use` 工具，将 `action` 设置为 `terminate`，并将 `status` 设置为 `success`。")]),
+            Message(role="system", content=[ContentItem(text=f"你是一个能够操作电脑的AI助手。你正在运行于 macOS 操作系统上。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。\n\n**重要步骤**：\n1. 首先，用自然语言详细描述你在截图上看到了什么，以及你打算做什么。\n2. 然后，生成相应的工具调用代码。\n\n**任务完成判断**：\n当你认为用户指派的任务已经完成时，请务必调用 `computer_use` 工具，将 `action` 设置为 `terminate`，并将 `status` 设置为 `success`。")]),
         ],
         functions=[computer_use.function],
         lang=None,
@@ -100,6 +118,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
         {
             "role": "user",
             "content": [
+                *prev_image_content,
                 {
                     "type": "image_url",
                     # "min_pixels": 1024,
@@ -111,11 +130,11 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
                     # Auto-detected format based on file extension
                     "image_url": {"url": f"data:image/{image_type};base64,{base64_image}"},
                 },
-                {"type": "text", "text": user_query + "\n\n请注意：请务必先用中文简要描述你的观察和思考，然后再输出工具调用。如果任务已完成，请调用 terminate 结束。"},
+                {"type": "text", "text": user_query + "\n\n请注意：请务必先用中文简要描述你的观察和思考，然后再输出工具调用。如果任务已完成，请调用 terminate 结束。" + prompt_suffix},
             ],
         }
     ]
-    print(json.dumps(messages, indent=4))
+    # print(json.dumps(messages, indent=4))
     completion = client.chat.completions.create(
         model = model_id,
         messages = messages,
@@ -207,6 +226,7 @@ class ComputerAgentWorker(QThread):
         # Initialize action history list
         action_history = []
         step_count = 0
+        last_screenshot_path = None
 
         try:
             while self.is_running:
@@ -234,7 +254,7 @@ class ComputerAgentWorker(QThread):
                 
                 try:
                     self.status_signal.emit(f"Step {step_count}: Thinking...")
-                    output_text, display_image = perform_gui_grounding_with_api(screenshot, self.user_query, self.model_id)
+                    output_text, display_image = perform_gui_grounding_with_api(screenshot, self.user_query, self.model_id, prev_screenshot_path=last_screenshot_path)
 
                     # Display results
                     # self.log_signal.emit(f"Model Output: {output_text}") # 移除原始模型输出日志
@@ -269,6 +289,8 @@ class ComputerAgentWorker(QThread):
                              self.log_signal.emit(f"📍 坐标: {action_params['coordinate']}")
                         if "text" in action_params:
                              self.log_signal.emit(f"⌨️ 输入: {action_params['text']}")
+                        if "keys" in action_params:
+                             self.log_signal.emit(f"🎹 按键: {action_params['keys']}")
                         
                         # Initialize computer use tool
                         computer_use = ComputerUse()
@@ -304,6 +326,9 @@ class ComputerAgentWorker(QThread):
                     
                     with open(os.path.join(log_dir, f"{step_prefix}_log.json"), "w", encoding="utf-8") as f:
                         json.dump(log_data, f, indent=4, ensure_ascii=False)
+                    
+                    # Update last screenshot path for next iteration
+                    last_screenshot_path = log_screenshot_path
 
                 except Exception as e:
                     # self.log_signal.emit(f"Error in loop iteration: {e}") # 简化错误输出
