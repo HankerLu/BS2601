@@ -504,7 +504,7 @@ class AgentGUI(QWidget):
         
         # Close button (since frameless)
         close_btn = QPushButton("退出")
-        close_btn.clicked.connect(self.close)
+        close_btn.clicked.connect(QApplication.instance().quit)
         close_btn.setStyleSheet("""
             QPushButton {
                 background-color: #666;
