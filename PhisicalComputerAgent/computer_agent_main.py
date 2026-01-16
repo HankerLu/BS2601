@@ -74,7 +74,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     # Build messages
     system_message = NousFnCallPrompt().preprocess_fncall_messages(
         messages=[
-            Message(role="system", content=[ContentItem(text="你是一个能够操作电脑的AI助手。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。\n\n**重要步骤**：\n1. 首先，用自然语言详细描述你在截图上看到了什么，以及你打算做什么（例如：'我看到了微信图标在右上角，坐标[0.9, 0.05]，我将点击它'）。\n2. 然后，生成相应的工具调用代码。")]),
+            Message(role="system", content=[ContentItem(text="你是一个能够操作电脑的AI助手。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。\n\n**重要步骤**：\n1. 首先，用自然语言详细描述你在截图上看到了什么，以及你打算做什么。\n2. 然后，生成相应的工具调用代码。\n\n**任务完成判断**：\n当你认为用户指派的任务已经完成时，请务必调用 `computer_use` 工具，将 `action` 设置为 `terminate`，并将 `status` 设置为 `success`。")]),
         ],
         functions=[computer_use.function],
         lang=None,
@@ -101,7 +101,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
                     # Auto-detected format based on file extension
                     "image_url": {"url": f"data:image/{image_type};base64,{base64_image}"},
                 },
-                {"type": "text", "text": user_query + "\n\n请注意：请务必先用中文简要描述你的观察和思考（例如'我看到了...'），然后再输出工具调用。"},
+                {"type": "text", "text": user_query + "\n\n请注意：请务必先用中文简要描述你的观察和思考，然后再输出工具调用。如果任务已完成，请调用 terminate 结束。"},
             ],
         }
     ]
@@ -265,6 +265,10 @@ class ComputerAgentWorker(QThread):
                         # self.log_signal.emit(f"Execution Result: {result}") # 简化输出，不再显示详细执行结果，除非出错
                         if "Error" in str(result):
                             self.log_signal.emit(f"❌ 执行错误: {result}")
+                        elif "Terminated with status: success" in str(result):
+                            self.log_signal.emit(f"🎉 任务完成，停止运行。")
+                            self.stop() # Stop the worker loop
+                            break       # Break out of the while loop immediately
                         else:
                             self.log_signal.emit(f"✅ 执行成功")
                         
