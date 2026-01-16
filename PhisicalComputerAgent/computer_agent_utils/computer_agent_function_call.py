@@ -38,7 +38,7 @@ class ComputerUse(BaseTool):
     - 对于应用程序启动，确认图标位置与预期一致（如 Dock 栏）。
     - 点击前验证目标区域的视觉特征是否符合预期应用程序。
 * 特别说明：在 macOS 系统中，微信（WeChat）的图标通常位于屏幕顶部的菜单栏右侧，图标外观为两个重叠的气泡（通常是绿色和白色，或黑白）。如果任务涉及打开微信，请优先检查顶部菜单栏。
-* 关于 macOS 程序坞 (Dock)：它通常位于屏幕底部。如果屏幕底部没有看到图标栏（被隐藏了），请尝试将鼠标光标移动到屏幕最底部边缘，这通常会唤出 Dock。如果任务涉及打开应用程序且未在屏幕上看到图标，请尝试此操作。Dock 上的图标通常排列紧凑，请确保点击坐标准确落在图标中心。
+* 关于 macOS 程序坞 (Dock)：它通常位于屏幕底部。如果屏幕底部没有看到图标栏（被隐藏了），请使用键盘快捷键 `Option + Command + D` 来显示/隐藏 Dock。如果任务涉及打开应用程序且未在屏幕上看到图标，请尝试此操作。Dock 上的图标通常排列紧凑，请确保点击坐标准确落在图标中心。
 """.strip()
 
     parameters = {
@@ -193,11 +193,14 @@ class ComputerUse(BaseTool):
         # 处理按键映射，pyautogui 的键名可能与传入的不同
         # 这里假设 keys 是 standard keys
         for key in keys:
-            # 特殊处理 mac 的 command 键
-            if key.lower() in ["meta", "super", "command", "cmd"]:
-                if platform.system() == "Darwin":
+            # 特殊处理 mac 的 command 键和其他键的映射
+            if platform.system() == "Darwin":
+                if key.lower() in ["meta", "super", "command", "cmd"]:
                     key = "command"
-                else:
+                elif key.lower() in ["alt", "option"]:
+                    key = "option"
+            else:
+                if key.lower() in ["meta", "super", "command", "cmd"]:
                     key = "win" # Windows key
             
             pyautogui.press(key)
