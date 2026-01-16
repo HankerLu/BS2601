@@ -3,6 +3,7 @@ import json
 import base64
 import time
 import shutil
+import sys
 from datetime import datetime
 from openai import OpenAI
 from PIL import Image
@@ -12,6 +13,10 @@ from qwen_agent.llm.fncall_prompts.nous_fncall_prompt import (
     ContentItem,
 )
 from transformers.models.qwen2_vl.image_processing_qwen2_vl_fast import smart_resize
+
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
+                            QTextEdit, QPushButton, QLabel, QDesktopWidget)
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
 from computer_agent_utils.computer_agent_function_call import ComputerUse
 from computer_agent_utils.cv_utils import capture_screen_and_save
@@ -69,7 +74,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     # Build messages
     system_message = NousFnCallPrompt().preprocess_fncall_messages(
         messages=[
-            Message(role="system", content=[ContentItem(text="You are a helpful assistant.")]),
+            Message(role="system", content=[ContentItem(text="你是一个能够操作电脑的AI助手。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。请根据用户的中文指令，结合屏幕截图，输出正确的函数调用。")]),
         ],
         functions=[computer_use.function],
         lang=None,
@@ -164,12 +169,311 @@ def draw_point(image: Image.Image, point: list, color=None):
 
     return combined.convert('RGB')
 
+class ComputerAgentWorker(QThread):
+    log_signal = pyqtSignal(str)
+    status_signal = pyqtSignal(str)
+    finished_signal = pyqtSignal()
+    
+    def __init__(self, user_query, model_id):
+        super().__init__()
+        self.user_query = user_query
+        self.model_id = model_id
+        self.is_running = True
+
+    def stop(self):
+        self.is_running = False
+
+    def run(self):
+        self.log_signal.emit(f"Task: {self.user_query}")
+        self.log_signal.emit("Starting agent...")
+
+        # Create log directory with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_dir = os.path.join("logs", f"run_{timestamp}")
+        os.makedirs(log_dir, exist_ok=True)
+        self.log_signal.emit(f"Logging to: {log_dir}")
+        
+        # Initialize action history list
+        action_history = []
+        step_count = 0
+
+        try:
+            while self.is_running:
+                step_count += 1
+                step_prefix = f"step_{step_count:03d}"
+                self.status_signal.emit(f"Step {step_count}: Capture Screen")
+                self.log_signal.emit(f"\n--- Step {step_count} ---")
+
+                # 截图并保存
+                screenshot_path = "imgs/screen.png"
+                success, scale = capture_screen_and_save(save_path=screenshot_path)
+                if not success:
+                    self.log_signal.emit("截图失败")
+                    time.sleep(1)
+                    continue
+                
+                # Save screenshot to log
+                log_screenshot_path = os.path.join(log_dir, f"{step_prefix}_screen.png")
+                shutil.copy(screenshot_path, log_screenshot_path)
+
+                screenshot = screenshot_path
+                
+                with Image.open(screenshot) as img:
+                    img_width, img_height = img.size
+                
+                try:
+                    self.status_signal.emit(f"Step {step_count}: Thinking...")
+                    output_text, display_image = perform_gui_grounding_with_api(screenshot, self.user_query, self.model_id)
+
+                    # Display results
+                    self.log_signal.emit(f"Model Output: {output_text}")
+
+                    # Execute the action using ComputerUse
+                    action_data = None
+                    if '<tool_call>' in output_text:
+                        self.status_signal.emit(f"Step {step_count}: Executing Action")
+                        tool_call_content = output_text.split('<tool_call>\n')[1].split('\n</tool_call>')[0]
+                        action_data = json.loads(tool_call_content)
+                        
+                        self.log_signal.emit(f"Executing action: {action_data}")
+                        
+                        # Extract arguments if present
+                        if 'arguments' in action_data:
+                            action_params = action_data['arguments']
+                        else:
+                            action_params = action_data
+
+                        # Initialize computer use tool
+                        computer_use = ComputerUse()
+                        result = computer_use.call(action_params)
+                        self.log_signal.emit(f"Execution Result: {result}")
+                        
+                        # Small delay to let the action take effect
+                        time.sleep(1)
+                    else:
+                        self.log_signal.emit("No tool call found in output.")
+                        time.sleep(2)
+                    
+                    # Save log data
+                    log_data = {
+                        "step": step_count,
+                        "timestamp": datetime.now().isoformat(),
+                        "model_output": output_text,
+                        "action_data": action_data
+                    }
+                    
+                    # Update history and save to summary file
+                    action_history.append(log_data)
+                    with open(os.path.join(log_dir, "action_history.json"), "w", encoding="utf-8") as f:
+                        json.dump(action_history, f, indent=4, ensure_ascii=False)
+                    
+                    with open(os.path.join(log_dir, f"{step_prefix}_log.json"), "w", encoding="utf-8") as f:
+                        json.dump(log_data, f, indent=4, ensure_ascii=False)
+
+                except Exception as e:
+                    self.log_signal.emit(f"Error in loop iteration: {e}")
+                    time.sleep(1)
+
+        except Exception as e:
+            self.log_signal.emit(f"Worker Error: {e}")
+        finally:
+            self.finished_signal.emit()
+
+class AgentGUI(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.worker = None
+        self.initUI()
+        self.load_query()
+
+    def initUI(self):
+        self.setWindowTitle('Computer Agent')
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        # Main layout
+        layout = QVBoxLayout()
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Container widget for styling
+        container = QWidget()
+        container.setStyleSheet("""
+            QWidget {
+                background-color: rgba(255, 255, 255, 0.95);
+                border-radius: 10px;
+                border: 1px solid #dcdcdc;
+            }
+        """)
+        container_layout = QVBoxLayout(container)
+
+        # Title
+        title = QLabel("Computer Agent")
+        title.setStyleSheet("font-weight: bold; color: #333; font-size: 14px;")
+        title.setAlignment(Qt.AlignCenter)
+        container_layout.addWidget(title)
+
+        # Query Input
+        self.query_input = QTextEdit()
+        self.query_input.setPlaceholderText("请输入用户指令...")
+        self.query_input.setMaximumHeight(80)
+        self.query_input.setStyleSheet("""
+            QTextEdit {
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                padding: 5px;
+                background-color: white;
+                color: #333;
+            }
+        """)
+        container_layout.addWidget(self.query_input)
+
+        # Status Label
+        self.status_label = QLabel("就绪")
+        self.status_label.setStyleSheet("color: #666; font-size: 11px;")
+        self.status_label.setWordWrap(True)
+        container_layout.addWidget(self.status_label)
+
+        # Buttons
+        btn_layout = QHBoxLayout()
+        
+        self.start_btn = QPushButton("开始")
+        self.start_btn.clicked.connect(self.start_agent)
+        self.start_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px;
+            }
+            QPushButton:hover { background-color: #45a049; }
+            QPushButton:disabled { background-color: #cccccc; }
+        """)
+        
+        self.stop_btn = QPushButton("停止")
+        self.stop_btn.clicked.connect(self.stop_agent)
+        self.stop_btn.setEnabled(False)
+        self.stop_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px;
+            }
+            QPushButton:hover { background-color: #da190b; }
+            QPushButton:disabled { background-color: #cccccc; }
+        """)
+
+        btn_layout.addWidget(self.start_btn)
+        btn_layout.addWidget(self.stop_btn)
+        container_layout.addLayout(btn_layout)
+        
+        # Close button (since frameless)
+        close_btn = QPushButton("退出")
+        close_btn.clicked.connect(self.close)
+        close_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #666;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
+                font-size: 10px;
+            }
+            QPushButton:hover { background-color: #555; }
+        """)
+        container_layout.addWidget(close_btn)
+
+        layout.addWidget(container)
+        self.setLayout(layout)
+
+        # Set geometry (Top Right)
+        screen = QDesktopWidget().screenGeometry()
+        width = 300
+        height = 300
+        self.setGeometry(screen.width() - width - 20, 40, width, height)
+
+    def load_query(self):
+        user_query = "请点击 macOS 顶部菜单栏的微信图标，打开微信主窗口。" # Default
+        try:
+            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_queries.json")
+            if os.path.exists(config_path):
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+                    selected_id = config.get("selected_query_id")
+                    for q in config.get("queries", []):
+                        if q["id"] == selected_id:
+                            user_query = q["query"]
+                            break
+        except Exception as e:
+            print(f"Warning: Could not load user_queries.json: {e}")
+        self.query_input.setText(user_query)
+
+    def start_agent(self):
+        query = self.query_input.toPlainText().strip()
+        if not query:
+            self.status_label.setText("错误：指令不能为空")
+            return
+
+        model_id = "qwen-vl-max-latest"
+        
+        self.worker = ComputerAgentWorker(query, model_id)
+        self.worker.log_signal.connect(self.update_log)
+        self.worker.status_signal.connect(self.update_status)
+        self.worker.finished_signal.connect(self.on_finished)
+        
+        self.worker.start()
+        
+        self.start_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.query_input.setEnabled(False)
+        self.status_label.setText("正在启动...")
+
+    def stop_agent(self):
+        if self.worker:
+            self.worker.stop()
+            self.status_label.setText("正在停止...")
+
+    def on_finished(self):
+        self.start_btn.setEnabled(True)
+        self.stop_btn.setEnabled(False)
+        self.query_input.setEnabled(True)
+        self.status_label.setText("代理已停止")
+
+    def update_log(self, text):
+        print(text) # Still print to console for debugging
+
+    def update_status(self, text):
+        self.status_label.setText(text)
+        
+    # Support dragging the window
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
 def main():
+    app = QApplication(sys.argv)
+    gui = AgentGUI()
+    gui.show()
+    sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()
+
+# The original main logic is preserved in ComputerAgentWorker logic above
+def original_main():
     """
     Main function to execute GUI grounding example in a closed loop
     """
     # Load user query from config
-    user_query = "Please click on the WeChat icon in the top macOS menu bar to open the main WeChat window." # Default
+    user_query = "请点击 macOS 顶部菜单栏的微信图标，打开微信主窗口。" # Default
     try:
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_queries.json")
         with open(config_path, "r", encoding="utf-8") as f:
@@ -283,7 +587,3 @@ def main():
 
     except KeyboardInterrupt:
         print("\nStopped by user.")
-
-
-if __name__ == "__main__":
-    main()

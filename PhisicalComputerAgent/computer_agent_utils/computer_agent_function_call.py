@@ -17,34 +17,34 @@ class ComputerUse(BaseTool):
     @property
     def description(self):
         return f"""
-Use a mouse and keyboard to interact with a computer, and take screenshots.
-* The current screen content you are analyzing comes from a screenshot with a resolution of 1280x831.
-* This is an interface to a desktop GUI. You do not have access to a terminal or applications menu. You must click on desktop icons to start applications.
-* Some applications may take time to start or process actions, so you may need to wait and take successive screenshots to see the results of your actions. E.g. if you click on Firefox and a window doesn't open, try wait and taking another screenshot.
-* IMPORTANT: All coordinates (x, y) MUST be normalized values between 0.0 and 1.0, where (0.0, 0.0) is the top-left and (1.0, 1.0) is the bottom-right.
-* Whenever you intend to move the cursor to click on an element like an icon, you should consult a screenshot to determine the coordinates of the element before moving the cursor.
-* If you tried clicking on a program or link but it failed to load, even after waiting, try adjusting your cursor position so that the tip of the cursor visually falls on the element that you want to click.
-* Make sure to click any buttons, links, icons, etc with the cursor tip in the center of the element. Don't click boxes on their edges.
+使用鼠标和键盘与电脑进行交互，并截取屏幕截图。
+* 你正在分析的当前屏幕内容来自一张分辨率为 1280x831 的截图。
+* 这是一个桌面 GUI 界面。你没有终端或应用程序菜单的访问权限。你必须点击桌面图标来启动应用程序。
+* 某些应用程序可能需要时间启动或处理操作，因此你可能需要等待并连续截图以查看操作结果。例如，如果你点击了 Firefox 但窗口没有打开，请尝试等待并再次截图。
+* 重要：所有坐标 (x, y) 必须是 0.0 到 1.0 之间的归一化值，其中 (0.0, 0.0) 是左上角，(1.0, 1.0) 是右下角。
+* 每当你打算移动光标点击像图标这样的元素时，你应该在移动光标之前参考截图来确定元素的坐标。
+* 如果你尝试点击程序或链接但加载失败，即使在等待后也是如此，请尝试调整你的光标位置，使光标尖端在视觉上落在你想要点击的元素上。
+* 确保用光标尖端点击任何按钮、链接、图标等的中心。不要点击框的边缘。
 """.strip()
 
     parameters = {
         "properties": {
             "action": {
                 "description": """
-The action to perform. The available actions are:
-* `key`: Performs key down presses on the arguments passed in order, then performs key releases in reverse order.
-* `type`: Type a string of text on the keyboard.
-* `mouse_move`: Move the cursor to a specified (x, y) pixel coordinate on the screen.
-* `left_click`: Click the left mouse button at a specified (x, y) pixel coordinate on the screen.
-* `left_click_drag`: Click and drag the cursor to a specified (x, y) pixel coordinate on the screen.
-* `right_click`: Click the right mouse button at a specified (x, y) pixel coordinate on the screen.
-* `middle_click`: Click the middle mouse button at a specified (x, y) pixel coordinate on the screen.
-* `double_click`: Double-click the left mouse button at a specified (x, y) pixel coordinate on the screen.
-* `triple_click`: Triple-click the left mouse button at a specified (x, y) pixel coordinate on the screen (simulated as double-click since it's the closest action).
-* `scroll`: Performs a scroll of the mouse scroll wheel.
-* `hscroll`: Performs a horizontal scroll (mapped to regular scroll).
-* `wait`: Wait specified seconds for the change to happen.
-* `terminate`: Terminate the current task and report its completion status.
+要执行的操作。可用的操作包括：
+* `key`：按顺序按下参数中传入的按键，然后按相反顺序释放按键。
+* `type`：在键盘上输入一串文本。
+* `mouse_move`：将光标移动到屏幕上指定的 (x, y) 像素坐标。
+* `left_click`：在屏幕上指定的 (x, y) 像素坐标处单击鼠标左键。
+* `left_click_drag`：点击并将光标拖动到屏幕上指定的 (x, y) 像素坐标。
+* `right_click`：在屏幕上指定的 (x, y) 像素坐标处单击鼠标右键。
+* `middle_click`：在屏幕上指定的 (x, y) 像素坐标处单击鼠标中键。
+* `double_click`：在屏幕上指定的 (x, y) 像素坐标处双击鼠标左键。
+* `triple_click`：在屏幕上指定的 (x, y) 像素坐标处三击鼠标左键（模拟为双击，因为它是最接近的操作）。
+* `scroll`：执行鼠标滚轮滚动。
+* `hscroll`：执行水平滚动（映射到常规滚动）。
+* `wait`：等待指定的秒数以使更改发生。
+* `terminate`：终止当前任务并报告其完成状态。
 """.strip(),
                 "enum": [
                     "key",
@@ -64,27 +64,27 @@ The action to perform. The available actions are:
                 "type": "string",
             },
             "keys": {
-                "description": "Required only by `action=key`.",
+                "description": "仅在 `action=key` 时需要。",
                 "type": "array",
             },
             "text": {
-                "description": "Required only by `action=type`.",
+                "description": "仅在 `action=type` 时需要。",
                 "type": "string",
             },
             "coordinate": {
-                "description": "(x, y): The normalized x (0.0-1.0) and y (0.0-1.0) coordinates to move the mouse to.",
+                "description": "(x, y): 移动鼠标到的归一化 x (0.0-1.0) 和 y (0.0-1.0) 坐标。",
                 "type": "array",
             },
             "pixels": {
-                "description": "The amount of scrolling to perform. Positive values scroll up, negative values scroll down. Required only by `action=scroll` and `action=hscroll`.",
+                "description": "要滚动的像素量。正值向上滚动，负值向下滚动。仅在 `action=scroll` 和 `action=hscroll` 时需要。",
                 "type": "number",
             },
             "time": {
-                "description": "The seconds to wait. Required only by `action=wait`.",
+                "description": "等待的秒数。仅在 `action=wait` 时需要。",
                 "type": "number",
             },
             "status": {
-                "description": "The status of the task. Required only by `action=terminate`.",
+                "description": "任务的状态。仅在 `action=terminate` 时需要。",
                 "type": "string",
                 "enum": ["success", "failure"],
             },
