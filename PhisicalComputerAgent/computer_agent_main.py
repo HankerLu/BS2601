@@ -74,7 +74,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     # Build messages
     system_message = NousFnCallPrompt().preprocess_fncall_messages(
         messages=[
-            Message(role="system", content=[ContentItem(text="你是一个能够操作电脑的AI助手。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。请根据用户的中文指令，结合屏幕截图，输出正确的函数调用。")]),
+            Message(role="system", content=[ContentItem(text="你是一个能够操作电脑的AI助手。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。\n\n**重要步骤**：\n1. 首先，用自然语言详细描述你在截图上看到了什么，以及你打算做什么（例如：'我看到了微信图标在右上角，坐标[0.9, 0.05]，我将点击它'）。\n2. 然后，生成相应的工具调用代码。")]),
         ],
         functions=[computer_use.function],
         lang=None,
@@ -101,7 +101,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
                     # Auto-detected format based on file extension
                     "image_url": {"url": f"data:image/{image_type};base64,{base64_image}"},
                 },
-                {"type": "text", "text": user_query},
+                {"type": "text", "text": user_query + "\n\n请注意：请务必先用中文简要描述你的观察和思考（例如'我看到了...'），然后再输出工具调用。"},
             ],
         }
     ]
@@ -232,7 +232,12 @@ class ComputerAgentWorker(QThread):
                     action_data = None
                     if '<tool_call>' in output_text:
                         self.status_signal.emit(f"Step {step_count}: Executing Action")
-                        tool_call_content = output_text.split('<tool_call>\n')[1].split('\n</tool_call>')[0]
+                        
+                        # 提取思考过程（tool_call 之前的文本）和工具调用
+                        parts = output_text.split('<tool_call>')
+                        thought_content = parts[0].strip()
+                        tool_call_content = parts[1].split('</tool_call>')[0].strip()
+                        
                         action_data = json.loads(tool_call_content)
                         
                         # 提取参数
@@ -241,9 +246,11 @@ class ComputerAgentWorker(QThread):
                         else:
                             action_params = action_data
 
-                        # 优先提取并显示思考过程
-                        thought = action_params.get("thought", "无思考内容")
-                        self.log_signal.emit(f"\n🧠 思考: {thought}")
+                        # 显示思考过程（来自自然语言文本）
+                        if thought_content:
+                            self.log_signal.emit(f"\n🧠 思考: {thought_content}")
+                        else:
+                            self.log_signal.emit(f"\n🧠 思考: (模型未输出思考文本)")
                         
                         action_type = action_params.get("action", "unknown")
                         self.log_signal.emit(f"⚡ 执行操作: {action_type}")
