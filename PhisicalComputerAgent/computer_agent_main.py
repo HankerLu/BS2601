@@ -226,7 +226,7 @@ class ComputerAgentWorker(QThread):
                     output_text, display_image = perform_gui_grounding_with_api(screenshot, self.user_query, self.model_id)
 
                     # Display results
-                    self.log_signal.emit(f"Model Output: {output_text}")
+                    # self.log_signal.emit(f"Model Output: {output_text}") # 移除原始模型输出日志
 
                     # Execute the action using ComputerUse
                     action_data = None
@@ -235,23 +235,36 @@ class ComputerAgentWorker(QThread):
                         tool_call_content = output_text.split('<tool_call>\n')[1].split('\n</tool_call>')[0]
                         action_data = json.loads(tool_call_content)
                         
-                        self.log_signal.emit(f"Executing action: {action_data}")
-                        
-                        # Extract arguments if present
+                        # 提取参数
                         if 'arguments' in action_data:
                             action_params = action_data['arguments']
                         else:
                             action_params = action_data
 
+                        # 优先提取并显示思考过程
+                        thought = action_params.get("thought", "无思考内容")
+                        self.log_signal.emit(f"\n🧠 思考: {thought}")
+                        
+                        action_type = action_params.get("action", "unknown")
+                        self.log_signal.emit(f"⚡ 执行操作: {action_type}")
+                        if "coordinate" in action_params:
+                             self.log_signal.emit(f"📍 坐标: {action_params['coordinate']}")
+                        if "text" in action_params:
+                             self.log_signal.emit(f"⌨️ 输入: {action_params['text']}")
+                        
                         # Initialize computer use tool
                         computer_use = ComputerUse()
                         result = computer_use.call(action_params)
-                        self.log_signal.emit(f"Execution Result: {result}")
+                        # self.log_signal.emit(f"Execution Result: {result}") # 简化输出，不再显示详细执行结果，除非出错
+                        if "Error" in str(result):
+                            self.log_signal.emit(f"❌ 执行错误: {result}")
+                        else:
+                            self.log_signal.emit(f"✅ 执行成功")
                         
                         # Small delay to let the action take effect
                         time.sleep(1)
                     else:
-                        self.log_signal.emit("No tool call found in output.")
+                        # self.log_signal.emit("No tool call found in output.") # 隐藏未找到工具调用的日志
                         time.sleep(2)
                     
                     # Save log data
@@ -271,7 +284,12 @@ class ComputerAgentWorker(QThread):
                         json.dump(log_data, f, indent=4, ensure_ascii=False)
 
                 except Exception as e:
-                    self.log_signal.emit(f"Error in loop iteration: {e}")
+                    # self.log_signal.emit(f"Error in loop iteration: {e}") # 简化错误输出
+                    if "thought" in str(e):
+                         self.log_signal.emit(f"⚠️ 模型未输出思考内容，将尝试无思考执行...")
+                         # 即使报错也可以尝试补全 thought 并重试执行，或者暂时忽略错误
+                    else:
+                         self.log_signal.emit(f"❌ 循环错误: {str(e)[:100]}...") # 截断过长错误
                     time.sleep(1)
 
         except Exception as e:
@@ -326,6 +344,22 @@ class AgentGUI(QWidget):
             }
         """)
         container_layout.addWidget(self.query_input)
+
+        # Log Output Area
+        self.log_output = QTextEdit()
+        self.log_output.setPlaceholderText("日志输出...")
+        self.log_output.setReadOnly(True)
+        self.log_output.setStyleSheet("""
+            QTextEdit {
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                padding: 5px;
+                background-color: #f9f9f9;
+                color: #555;
+                font-size: 11px;
+            }
+        """)
+        container_layout.addWidget(self.log_output)
 
         # Status Label
         self.status_label = QLabel("就绪")
@@ -390,8 +424,8 @@ class AgentGUI(QWidget):
 
         # Set geometry (Top Right)
         screen = QDesktopWidget().screenGeometry()
-        width = 300
-        height = 300
+        width = 400
+        height = 600
         self.setGeometry(screen.width() - width - 20, 40, width, height)
 
     def load_query(self):
@@ -443,6 +477,11 @@ class AgentGUI(QWidget):
 
     def update_log(self, text):
         print(text) # Still print to console for debugging
+        self.log_output.append(text)
+        # Auto scroll to bottom
+        cursor = self.log_output.textCursor()
+        cursor.movePosition(cursor.End)
+        self.log_output.setTextCursor(cursor)
 
     def update_status(self, text):
         self.status_label.setText(text)

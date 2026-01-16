@@ -63,6 +63,10 @@ class ComputerUse(BaseTool):
                 ],
                 "type": "string",
             },
+            "thought": {
+                "description": "简要描述你进行此操作的思路和原因，例如“我看到了微信图标，所以点击它以打开应用”",
+                "type": "string",
+            },
             "keys": {
                 "description": "仅在 `action=key` 时需要。",
                 "type": "array",
