@@ -35,7 +35,7 @@ def encode_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
-def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, prev_screenshot_path=None, min_pixels=3136, max_pixels=12845056):
+def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, prev_screenshot_path=None, prev_action_summary=None, min_pixels=3136, max_pixels=12845056):
     """
     Perform GUI grounding using Qwen model to interpret user query on a screenshot.
     
@@ -44,6 +44,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, prev_s
         user_query (str): User's query/instruction
         model: Preloaded Qwen model
         prev_screenshot_path (str): Path to the previous screenshot image (optional)
+        prev_action_summary (str): Summary of the previous action taken (optional)
         min_pixels: Minimum pixels for the image
         max_pixels: Maximum pixels for the image
         
@@ -82,6 +83,11 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, prev_s
             prompt_suffix = "\n\n注意：第一张图片是上一步操作后的截图（用于参考），第二张图片是当前屏幕截图。请针对当前屏幕（第二张图）进行下一步操作。"
         except Exception as e:
             print(f"Warning: Failed to process previous screenshot: {e}")
+
+    # Process previous action summary
+    prev_action_text = ""
+    if prev_action_summary:
+        prev_action_text = f"\n\n**上一步执行的操作**：{prev_action_summary}\n请根据上一步操作和当前屏幕变化，判断任务进展。如果上一步操作成功（如菜单已展开、应用已打开），请继续下一步或结束任务。"
 
     client = OpenAI(
         #If the environment variable is not configured, please replace the following line with the Dashscope API Key: api_key="sk-xxx". Access via https://bailian.console.alibabacloud.com/?apiKey=1 "
@@ -130,7 +136,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, prev_s
                     # Auto-detected format based on file extension
                     "image_url": {"url": f"data:image/{image_type};base64,{base64_image}"},
                 },
-                {"type": "text", "text": user_query + "\n\n请注意：请务必先用中文简要描述你的观察和思考，然后再输出工具调用。如果任务已完成，请调用 terminate 结束。" + prompt_suffix},
+                {"type": "text", "text": user_query + prev_action_text + "\n\n请注意：请务必先用中文简要描述你的观察和思考，然后再输出工具调用。如果任务已完成，请调用 terminate 结束。" + prompt_suffix},
             ],
         }
     ]
@@ -227,6 +233,7 @@ class ComputerAgentWorker(QThread):
         action_history = []
         step_count = 0
         last_screenshot_path = None
+        last_action_summary = None
 
         try:
             while self.is_running:
@@ -254,7 +261,13 @@ class ComputerAgentWorker(QThread):
                 
                 try:
                     self.status_signal.emit(f"Step {step_count}: Thinking...")
-                    output_text, display_image = perform_gui_grounding_with_api(screenshot, self.user_query, self.model_id, prev_screenshot_path=last_screenshot_path)
+                    output_text, display_image = perform_gui_grounding_with_api(
+                        screenshot, 
+                        self.user_query, 
+                        self.model_id, 
+                        prev_screenshot_path=last_screenshot_path,
+                        prev_action_summary=last_action_summary
+                    )
 
                     # Display results
                     # self.log_signal.emit(f"Model Output: {output_text}") # 移除原始模型输出日志
@@ -276,6 +289,18 @@ class ComputerAgentWorker(QThread):
                             action_params = action_data['arguments']
                         else:
                             action_params = action_data
+
+                        # 构造动作摘要
+                        action_type = action_params.get("action", "unknown")
+                        action_details = ""
+                        if "coordinate" in action_params:
+                            action_details += f" at {action_params['coordinate']}"
+                        if "keys" in action_params:
+                            action_details += f" with keys {action_params['keys']}"
+                        if "text" in action_params:
+                            action_details += f" typing '{action_params['text']}'"
+                        
+                        last_action_summary = f"{action_type}{action_details}"
 
                         # 显示思考过程（来自自然语言文本）
                         if thought_content:
