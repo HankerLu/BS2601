@@ -1,5 +1,5 @@
 {
-    "selected_query_id": 5,
+    "selected_query_id": 6,
     "queries": [
         {
             "id": 1,
@@ -25,6 +25,26 @@
             "id": 5,
             "description": "Open Apple Notes",
             "query": "Please open the Apple Notes app (备忘录) from the dock or using Spotlight."
+        },
+        {
+            "id": 6,
+            "description": "Click Apple Menu",
+            "query": "Please click the Apple logo () in the top-left corner of the menu bar."
+        },
+        {
+            "id": 7,
+            "description": "Click Control Center",
+            "query": "Please click the Control Center icon (two toggle switches) in the top-right menu bar."
+        },
+        {
+            "id": 8,
+            "description": "Click Finder in Dock",
+            "query": "Please click the Finder icon (smiling face) on the far left of the Dock."
+        },
+        {
+            "id": 9,
+            "description": "Click Trash in Dock",
+            "query": "Please click the Trash (Bin) icon on the far right of the Dock."
         }
     ]
 }
