@@ -14,6 +14,15 @@ from qwen_agent.llm.fncall_prompts.nous_fncall_prompt import (
 )
 from transformers.models.qwen2_vl.image_processing_qwen2_vl_fast import smart_resize
 
+import platform
+
+try:
+    # 尝试导入 AppKit 用于 macOS 的高级窗口控制
+    import objc
+    from AppKit import NSWindow, NSWindowCollectionBehaviorCanJoinAllSpaces, NSWindowCollectionBehaviorStationary, NSApplication, NSFloatingWindowLevel
+except ImportError:
+    pass
+
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
                             QTextEdit, QPushButton, QLabel, QDesktopWidget)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
@@ -319,8 +328,35 @@ class AgentGUI(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Computer Agent')
+        # 设置基本窗口属性
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
+
+        # macOS 特定的窗口置顶和多空间显示逻辑
+        if platform.system() == "Darwin":
+            try:
+                # 获取当前窗口 ID
+                win_id = self.winId().__int__()
+                
+                # 获取 NSView 和 NSWindow
+                ns_view = objc.objc_object(c_void_p=win_id)
+                ns_window = ns_view.window()
+                
+                # 设置窗口可以在所有空间（Desktop）显示
+                # NSWindowCollectionBehaviorCanJoinAllSpaces = 1 << 0
+                # NSWindowCollectionBehaviorStationary = 1 << 4
+                ns_window.setCollectionBehavior_(NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorStationary)
+                
+                # 设置窗口层级为浮动层级（比普通窗口高）
+                # NSFloatingWindowLevel = 3
+                ns_window.setLevel_(NSFloatingWindowLevel)
+                
+                print("已应用 macOS 特定窗口设置：允许在所有空间显示且置顶")
+            except Exception as e:
+                print(f"应用 macOS 窗口设置失败（可能未安装 pyobjc）: {e}")
+                # 回退方案：如果无法使用 AppKit，至少确保 Qt 属性设置正确
+                # Qt.Tool 在 macOS 上通常已经有较好的置顶效果，但在全屏应用上可能受限
+                pass
 
         # Main layout
         layout = QVBoxLayout()
