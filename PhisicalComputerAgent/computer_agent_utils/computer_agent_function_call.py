@@ -7,6 +7,8 @@ from datetime import datetime
 
 from qwen_agent.tools.base import BaseTool, register_tool
 
+from computer_agent_utils.config import Config, Utils
+
 # Set pyautogui safety delay
 pyautogui.PAUSE = 0.5
 pyautogui.FAILSAFE = True
@@ -18,7 +20,7 @@ class ComputerUse(BaseTool):
     def description(self):
         return f"""
 使用鼠标和键盘与电脑进行交互，并截取屏幕截图。
-* 你正在分析的当前屏幕内容来自一张分辨率为 1280x831 的截图。
+* 你正在分析的当前屏幕内容来自一张分辨率为 {Config.SCREENSHOT_WIDTH}x{Config.SCREENSHOT_HEIGHT} 的截图。
 * 这是一个桌面 GUI 界面。你没有终端或应用程序菜单的访问权限。你必须点击桌面图标来启动应用程序。
 * 某些应用程序可能需要时间启动或处理操作，因此你可能需要等待并连续截图以查看操作结果。例如，如果你点击了 Firefox 但窗口没有打开，请尝试等待并再次截图。
 * 重要：所有坐标 (x, y) 必须是 0.0 到 1.0 之间的归一化值，其中 (0.0, 0.0) 是左上角，(1.0, 1.0) 是右下角。
@@ -99,43 +101,27 @@ class ComputerUse(BaseTool):
 
     def __init__(self, cfg=None):
         # 获取实际屏幕尺寸
+        self.screen_width = Config.SCREEN_WIDTH
+        self.screen_height = Config.SCREEN_HEIGHT
+        
+        log_msg = f"Screen width: {self.screen_width}, Screen height: {self.screen_height}"
+        print(log_msg)
+        # Save to local log
         try:
-            self.screen_width, self.screen_height = pyautogui.size()
-            log_msg = f"Screen width: {self.screen_width}, Screen height: {self.screen_height}"
-            print(log_msg)
-            # Save to local log
-            try:
-                with open("screen_log.txt", "a", encoding="utf-8") as f:
-                    f.write(f"{datetime.now().isoformat()} - {log_msg}\n")
-            except Exception as e:
-                print(f"Failed to write to screen_log.txt: {e}")
-        except Exception:
-            self.screen_width, self.screen_height = 1920, 1080  # Default fallback
+            with open("screen_log.txt", "a", encoding="utf-8") as f:
+                f.write(f"{datetime.now().isoformat()} - {log_msg}\n")
+        except Exception as e:
+            print(f"Failed to write to screen_log.txt: {e}")
             
         super().__init__(cfg)
 
     def _map_coordinates(self, x, y):
         """Map normalized coordinates (0.0-1.0) to actual screen coordinates"""
-        # 模型输出是 0.0-1.0 的归一化坐标
-        
-        # 处理 VLM 幻觉导致的非归一化坐标
-        # 如果坐标值大于1，说明模型输出的是像素坐标，需要基于截图分辨率(1280x831)进行归一化
-        SCREENSHOT_WIDTH = 1280
-        SCREENSHOT_HEIGHT = 831
-        
-        if x > 1.0:
-            x = x / SCREENSHOT_WIDTH
-        if y > 1.0:
-            y = y / SCREENSHOT_HEIGHT
-
-        # 直接映射到实际屏幕分辨率
-        real_x = int(x * self.screen_width)
-        real_y = int(y * self.screen_height)
+        # 使用统一的 Utils 进行转换
+        real_x, real_y = Utils.normalize_to_pixel(x, y, self.screen_width, self.screen_height)
         
         # 边界检查
-        safe_margin = 5  # 距离边缘5像素的安全边距
-        real_x = max(safe_margin, min(real_x, self.screen_width - safe_margin))
-        real_y = max(safe_margin, min(real_y, self.screen_height - safe_margin))
+        real_x, real_y = Utils.ensure_safe_coordinates(real_x, real_y)
         
         return real_x, real_y
 

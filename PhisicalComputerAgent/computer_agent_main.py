@@ -20,6 +20,7 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
 from computer_agent_utils.computer_agent_function_call import ComputerUse
 from computer_agent_utils.cv_utils import capture_screen_and_save
+from computer_agent_utils.config import Config, Utils
 
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
@@ -57,8 +58,8 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     
     client = OpenAI(
         #If the environment variable is not configured, please replace the following line with the Dashscope API Key: api_key="sk-xxx". Access via https://bailian.console.alibabacloud.com/?apiKey=1 "
-        api_key='sk-5171c051fdbc42bd96d466d7158ff2f0',
-        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        api_key=Config.API_KEY,
+        base_url=Config.API_BASE_URL,
     )
     resized_height, resized_width = smart_resize(
         input_image.height,
@@ -74,7 +75,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
     # Build messages
     system_message = NousFnCallPrompt().preprocess_fncall_messages(
         messages=[
-            Message(role="system", content=[ContentItem(text="你是一个能够操作电脑的AI助手。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。\n\n**重要步骤**：\n1. 首先，用自然语言详细描述你在截图上看到了什么，以及你打算做什么。\n2. 然后，生成相应的工具调用代码。\n\n**任务完成判断**：\n当你认为用户指派的任务已经完成时，请务必调用 `computer_use` 工具，将 `action` 设置为 `terminate`，并将 `status` 设置为 `success`。")]),
+            Message(role="system", content=[ContentItem(text=f"你是一个能够操作电脑的AI助手。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。\n\n**重要步骤**：\n1. 首先，用自然语言详细描述你在截图上看到了什么，以及你打算做什么。\n2. 然后，生成相应的工具调用代码。\n\n**任务完成判断**：\n当你认为用户指派的任务已经完成时，请务必调用 `computer_use` 工具，将 `action` 设置为 `terminate`，并将 `status` 设置为 `success`。")]),
         ],
         functions=[computer_use.function],
         lang=None,
@@ -124,8 +125,9 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, min_pi
 
         if 'arguments' in action and 'coordinate' in action['arguments']:
             coordinate_relative = action['arguments']['coordinate']
-            # coordinate_relative 是 0.0-1.0 的归一化坐标
-            coordinate_absolute = [coordinate_relative[0] * resized_width, coordinate_relative[1] * resized_height]
+            # 使用统一 Utils 进行转换，支持 hallucinated absolute coordinates
+            real_x, real_y = Utils.normalize_to_pixel(coordinate_relative[0], coordinate_relative[1], resized_width, resized_height)
+            coordinate_absolute = [real_x, real_y]
             display_image = draw_point(display_image, coordinate_absolute, color='green')
             
     except (IndexError, json.JSONDecodeError, KeyError) as e:
@@ -461,7 +463,7 @@ class AgentGUI(QWidget):
             self.status_label.setText("错误：指令不能为空")
             return
 
-        model_id = "qwen-vl-max-latest"
+        model_id = Config.MODEL_ID
         
         self.worker = ComputerAgentWorker(query, model_id)
         self.worker.log_signal.connect(self.update_log)
@@ -541,7 +543,7 @@ def original_main():
 
     # Example usage
     # user_query = "Please click on the WeChat icon in the top macOS menu bar to open the main WeChat window."
-    model_id = "qwen-vl-max-latest"
+    model_id = Config.MODEL_ID
     
     print(f"Task: {user_query}")
     print("Starting closed loop agent. Press Ctrl+C to stop.")
