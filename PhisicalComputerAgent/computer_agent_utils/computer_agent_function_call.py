@@ -196,19 +196,27 @@ class ComputerUse(BaseTool):
     def _key(self, keys: List[str]):
         # 处理按键映射，pyautogui 的键名可能与传入的不同
         # 这里假设 keys 是 standard keys
+        
+        # 转换键名为 pyautogui 支持的格式
+        converted_keys = []
         for key in keys:
             # 特殊处理 mac 的 command 键和其他键的映射
             if platform.system() == "Darwin":
                 if key.lower() in ["meta", "super", "command", "cmd"]:
-                    key = "command"
+                    converted_keys.append("command")
                 elif key.lower() in ["alt", "option"]:
-                    key = "option"
+                    converted_keys.append("option")
+                else:
+                    converted_keys.append(key)
             else:
                 if key.lower() in ["meta", "super", "command", "cmd"]:
-                    key = "win" # Windows key
-            
-            pyautogui.press(key)
-        return f"Pressed keys: {keys}"
+                    converted_keys.append("win")  # Windows key
+                else:
+                    converted_keys.append(key)
+        
+        # 使用 hotkey 同时按下所有键（组合键）
+        pyautogui.hotkey(*converted_keys)
+        return f"Pressed keys: {keys} (converted to: {converted_keys})"
 
     def _type(self, text: str):
         pyautogui.write(text, interval=0.01)
