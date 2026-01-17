@@ -1,5 +1,5 @@
 {
-    "selected_query_id": 8,
+    "selected_query_id": 11,
     "queries": [
         {
             "id": 1,
@@ -50,6 +50,81 @@
             "id": 10,
             "description": "Toggle Dock",
             "query": "Please open (toggle) the macOS Dock."
+        },
+        {
+            "id": 11,
+            "description": "Use Spotlight to Open App",
+            "query": "Press Command+Space to open Spotlight, then search for 'Calculator' and open it."
+        },
+        {
+            "id": 12,
+            "description": "Create Folder in Finder",
+            "query": "Open Finder, then create a new folder on the Desktop named 'TestFolder'."
+        },
+        {
+            "id": 13,
+            "description": "Take Screenshot",
+            "query": "Take a screenshot of the entire screen using the keyboard shortcut Command+Shift+3."
+        },
+        {
+            "id": 14,
+            "description": "Open Safari and Search",
+            "query": "Open Safari browser and search for 'macOS tips' in the address bar."
+        },
+        {
+            "id": 15,
+            "description": "Adjust System Volume",
+            "query": "Open Control Center and adjust the system volume slider to 50%."
+        },
+        {
+            "id": 16,
+            "description": "Navigate Apple Menu",
+            "query": "Click the Apple menu and select 'About This Mac' to view system information."
+        },
+        {
+            "id": 17,
+            "description": "Create and Save TextEdit Document",
+            "query": "Open TextEdit, type 'Test Document', then save it to Desktop as 'test.txt'."
+        },
+        {
+            "id": 18,
+            "description": "Use Mission Control",
+            "query": "Open Mission Control using the F3 key or gesture to view all open windows and desktops."
+        },
+        {
+            "id": 19,
+            "description": "Search in Finder",
+            "query": "Open Finder and use the search bar to find all '.txt' files on the computer."
+        },
+        {
+            "id": 20,
+            "description": "Change Desktop Wallpaper",
+            "query": "Open System Settings, go to Wallpaper section, and change the desktop background."
+        },
+        {
+            "id": 21,
+            "description": "Empty Trash",
+            "query": "Right-click the Trash icon in the Dock and select 'Empty Trash'."
+        },
+        {
+            "id": 22,
+            "description": "Open App from Launchpad",
+            "query": "Open Launchpad, search for 'Photos', and launch the Photos app."
+        },
+        {
+            "id": 23,
+            "description": "Rename File in Finder",
+            "query": "Open Finder, navigate to Desktop, find any file and rename it to 'renamed_file'."
+        },
+        {
+            "id": 24,
+            "description": "Use Quick Look",
+            "query": "Open Finder, select any file on Desktop, and press Space to preview it using Quick Look."
+        },
+        {
+            "id": 25,
+            "description": "Adjust Display Brightness",
+            "query": "Open Control Center and adjust the display brightness to 75% using the brightness slider."
         }
     ]
 }
