@@ -94,6 +94,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, prev_s
         api_key=Config.API_KEY,
         base_url=Config.API_BASE_URL,
     )
+    print(f"Original image size: {input_image.width}x{input_image.height}")
     resized_height, resized_width = smart_resize(
         input_image.height,
         input_image.width,

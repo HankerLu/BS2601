@@ -37,9 +37,15 @@ def capture_screen_and_save(save_path="imgs/screen.png", optimize_for_speed=True
             # 若图片的最长边大于max_png,则将最长边缩小为max_png,其他边等比缩小
             height, width, _ = screenshot_bgr.shape
             max_edge = max(height, width)
+            print(f"[CV DEBUG] 原始截图尺寸: {width}x{height}, Max允许: {max_png}")
             if max_edge > max_png:
                 scale = max_png / max_edge
+                print(f"[CV DEBUG] 触发缩放! Scale: {scale:.4f}")
                 screenshot_bgr = cv2.resize(screenshot_bgr, None, fx=scale, fy=scale)
+                h_new, w_new, _ = screenshot_bgr.shape
+                print(f"[CV DEBUG] 缩放后尺寸: {w_new}x{h_new}")
+            else:
+                print(f"[CV DEBUG] 无需缩放")
             
         # 使用更快的保存参数
         save_params = [int(cv2.IMWRITE_PNG_COMPRESSION), 1] if optimize_for_speed else []
