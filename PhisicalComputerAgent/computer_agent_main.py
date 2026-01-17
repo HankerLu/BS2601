@@ -136,7 +136,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, prev_s
                     # Auto-detected format based on file extension
                     "image_url": {"url": f"data:image/{image_type};base64,{base64_image}"},
                 },
-                {"type": "text", "text": user_query + prev_action_text + "\n\n请注意：请务必先用中文简要描述你的观察和思考，然后再输出工具调用。如果任务已完成，请调用 terminate 结束。" + prompt_suffix},
+                {"type": "text", "text": user_query + prev_action_text + "\n\n请注意：请务必先用中文简要描述你的观察和思考，然后再输出工具调用。\n\n【任务完成判断标准 - 请严格遵守】：\n在调用 terminate 之前，你必须：\n1. 仔细对比当前截图与用户的原始任务要求（user_query）\n2. 逐条检查用户任务的每个具体目标是否都已在截图中得到体现\n3. 确认操作结果已经真实呈现在屏幕上（不仅仅是你执行了操作，而是要看到操作的实际效果）\n4. 如果任务包含多个步骤，确保所有步骤都已完成\n5. 只有当你能在当前截图中明确看到任务完成的证据时，才能调用 terminate(status='success')\n6. 如果截图显示任务尚未完成、操作仍在进行中、或需要等待加载，请继续执行下一步操作，不要提前终止\n7. 如果遇到无法解决的错误或确认任务无法完成，请调用 terminate(status='failure') 并说明原因\n\n请在思考部分明确说明你看到了哪些证据表明任务已完成，然后再决定是否调用 terminate。" + prompt_suffix},
             ],
         }
     ]
