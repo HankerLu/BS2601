@@ -38,7 +38,7 @@ class ComputerUse(BaseTool):
     - 对于应用程序启动，确认图标位置与预期一致（如 Dock 栏）。
     - 点击前验证目标区域的视觉特征是否符合预期应用程序。
 * 特别说明：在 macOS 系统中，微信（WeChat）的图标通常位于屏幕顶部的菜单栏右侧，图标外观为两个重叠的气泡（通常是绿色和白色，或黑白）。如果任务涉及打开微信，请优先检查顶部菜单栏。
-* 关于 macOS 程序坞 (Dock)：它通常位于屏幕底部。如果屏幕底部没有看到图标栏（被隐藏了），请使用键盘快捷键 `Option + Command + D` 来显示/隐藏 Dock。如果任务涉及打开应用程序且未在屏幕上看到图标，请尝试此操作。Dock 上的图标通常排列紧凑，请确保点击坐标准确落在图标中心。
+* 关于 macOS 程序坞 (Dock)：它通常位于屏幕底部。如果屏幕底部没有看到图标栏（被隐藏了），请使用 `action="toggle_dock"` 来显示/隐藏 Dock。如果任务涉及打开应用程序且未在屏幕上看到图标，请尝试此操作。Dock 上的图标通常排列紧凑，请确保点击坐标准确落在图标中心。
 """.strip()
 
     parameters = {
@@ -58,6 +58,7 @@ class ComputerUse(BaseTool):
 * `scroll`：执行鼠标滚轮滚动。
 * `hscroll`：执行水平滚动（映射到常规滚动）。
 * `wait`：等待指定的秒数以使更改发生。
+* `toggle_dock`：切换 macOS Dock 栏的显示与隐藏状态（等同于 Option + Command + D）。
 * `terminate`：终止当前任务并报告其完成状态。
 """.strip(),
                 "enum": [
@@ -73,6 +74,7 @@ class ComputerUse(BaseTool):
                     "scroll",
                     "hscroll",
                     "wait",
+                    "toggle_dock",
                     "terminate",
                 ],
                 "type": "string",
@@ -158,6 +160,8 @@ class ComputerUse(BaseTool):
                 return self._hscroll(params.get("pixels", 0))
             elif action == "wait":
                 return self._wait(params.get("time", 0.5))
+            elif action == "toggle_dock":
+                return self._toggle_dock()
             elif action == "terminate":
                 return self._terminate(params.get("status", "success"))
             else:
@@ -246,6 +250,13 @@ class ComputerUse(BaseTool):
     def _wait(self, time_sec: float):
         time.sleep(time_sec)
         return f"Waited {time_sec} seconds"
+
+    def _toggle_dock(self):
+        if platform.system() == "Darwin":
+            # 使用 hotkey 同时按下这些键
+            pyautogui.hotkey("option", "command", "d")
+            return "Toggled Dock visibility (Option + Command + D)"
+        return "Toggle Dock is only supported on macOS"
 
     def _terminate(self, status: str):
         print(f"TERMINATING TASK: {status}")

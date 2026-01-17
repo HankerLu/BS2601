@@ -45,6 +45,11 @@
             "id": 9,
             "description": "Click Trash in Dock",
             "query": "Please click the Trash (Bin) icon on the far right of the Dock."
+        },
+        {
+            "id": 10,
+            "description": "Toggle Dock",
+            "query": "Please open (toggle) the macOS Dock."
         }
     ]
 }

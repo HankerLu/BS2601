@@ -108,7 +108,7 @@ def perform_gui_grounding_with_api(screenshot_path, user_query, model_id, prev_s
     # Build messages
     system_message = NousFnCallPrompt().preprocess_fncall_messages(
         messages=[
-            Message(role="system", content=[ContentItem(text=f"你是一个能够操作电脑的AI助手。你正在运行于 macOS 操作系统上。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令来控制鼠标和键盘。\n\n**重要步骤**：\n1. 首先，用自然语言详细描述你在截图上看到了什么，以及你打算做什么。\n2. 然后，生成相应的工具调用代码。\n\n**任务完成判断**：\n当你认为用户指派的任务已经完成时，请务必调用 `computer_use` 工具，将 `action` 设置为 `terminate`，并将 `status` 设置为 `success`。")]),
+            Message(role="system", content=[ContentItem(text=f"你是一个能够操作电脑的AI助手。你正在运行于 macOS 操作系统上。你可以通过截图理解当前屏幕内容，并输出坐标和操作指令（包括 toggle_dock 等快捷指令）来控制鼠标和键盘。\n\n**重要步骤**：\n1. 首先，用自然语言详细描述你在截图上看到了什么，以及你打算做什么。\n2. 然后，生成相应的工具调用代码。\n\n**任务完成判断**：\n当你认为用户指派的任务已经完成时，请务必调用 `computer_use` 工具，将 `action` 设置为 `terminate`，并将 `status` 设置为 `success`。")]),
         ],
         functions=[computer_use.function],
         lang=None,
