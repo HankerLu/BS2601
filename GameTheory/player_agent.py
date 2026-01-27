@@ -26,6 +26,7 @@ class PrisonerAgent:
    - 合作者（被揭发的一方）得 0 分（最大亏损，完败）。
 
 请基于博弈论逻辑、历史对手行为模式以及得分最大化原则进行思考。
+一共有5轮博弈，5轮结束后定胜负。
 """
 
     def update_history(self, round_num: int, my_action: str, opponent_action: str, my_score: int, opponent_score: int):
