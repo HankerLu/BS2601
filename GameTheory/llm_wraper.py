@@ -3,6 +3,7 @@ import json
 import requests
 import base64
 import time
+from datetime import datetime
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -26,7 +27,7 @@ class LLMWrapper:
     封装了与云端多模态大模型API交互的AI功能。
     完全适配嵌入式系统部署场景，不依赖本地大模型。
     """
-    def __init__(self, db_conn=None, db_cursor=None, api_key=None):
+    def __init__(self, db_conn=None, db_cursor=None, api_key=None, log_dir="api_logs"):
         self.api_key = api_key or ARK_API_KEY
         if self.api_key == "YOUR_ARK_API_KEY_HERE":
             raise ValueError("API密钥没有设置。 请在环境变量设置API密钥。")
@@ -39,6 +40,14 @@ class LLMWrapper:
         self.db_cursor = db_cursor
         self.show_mode = SHOW_MODE # 将全局设置赋给实例变量
 
+        # 创建日志目录
+        self.log_dir = log_dir
+        os.makedirs(self.log_dir, exist_ok=True)
+        
+        # 创建会话日志文件（记录本次运行的所有API调用）
+        session_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.session_log_file = os.path.join(self.log_dir, f"session_{session_timestamp}.jsonl")
+        
         self.session = requests.Session()
         # 定义重试策略
         retry_strategy = Retry(
@@ -54,7 +63,7 @@ class LLMWrapper:
         self.session.mount("https://", adapter)
         self.session.mount("http://", adapter)
 
-        print("云端多模态API客户端初始化成功。")
+        print(f"云端多模态API客户端初始化成功。日志文件: {self.session_log_file}")
 
     def _clean_and_parse_json(self, response_str: str):
         """
@@ -129,19 +138,55 @@ class LLMWrapper:
             return None
 
 
-    def _call_api(self, data, stream=False):
+    def _save_api_log(self, log_entry):
+        """保存API调用日志到文件"""
+        try:
+            with open(self.session_log_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+        except Exception as e:
+            print(f"  - [Warning] 日志保存失败: {e}")
+
+    def _call_api(self, data, stream=False, mode=None):
         """通用的底层API调用函数，现在使用带有重试逻辑的session。"""
+        call_timestamp = datetime.now().isoformat()
+        log_entry = {
+            "timestamp": call_timestamp,
+            "mode": mode,
+            "request": data,
+            "response": None,
+            "error": None,
+            "status_code": None,
+            "request_id": None
+        }
+        
         try:
             # 【核心修改】使用 self.session.post 替换 requests.post
             response = self.session.post(COMPLETIONS_URL, headers=self.headers, json=data, timeout=60, stream=stream)
             
             request_id = response.headers.get('x-request-id', 'N/A')
+            log_entry["status_code"] = response.status_code
+            log_entry["request_id"] = request_id
+            
             print(f"  - [API Call] Status: {response.status_code} | Request ID: {request_id}")
             
             response.raise_for_status()
+            
+            # 如果不是流式调用，记录响应内容
+            if not stream:
+                try:
+                    response_json = response.json()
+                    log_entry["response"] = response_json
+                except:
+                    log_entry["response"] = {"raw": response.text}
+            
+            # 保存日志
+            self._save_api_log(log_entry)
+            
             return response
         except requests.exceptions.RequestException as e:
             # 异常处理现在能更好地反映重试后的最终失败
+            log_entry["error"] = str(e)
+            self._save_api_log(log_entry)
             print(f"API请求在多次重试后最终失败: {e}")
             return None
 
@@ -154,7 +199,7 @@ class LLMWrapper:
         # --- 正常API调用 ---
         print(f"  - [API Call] 正在为 {mode or '功能性调用'} 生成文本...")
         data = {"model": TEXT_MODEL, "messages": messages, "temperature": temperature, "stream": stream}
-        response = self._call_api(data, stream=stream)
+        response = self._call_api(data, stream=stream, mode=mode)
         if not response:
             return None if not stream else iter([]) # 返回一个空迭代器
         
@@ -178,7 +223,7 @@ class LLMWrapper:
         print(f"  - [API Call] 正在为 {mode or '功能性调用'} 生成JSON...")
         target_model = model or TEXT_MODEL
         data = { "model": target_model, "messages": messages, "temperature": temperature, "response_format": {"type": "json_object"} }
-        response = self._call_api(data, stream=False)
+        response = self._call_api(data, stream=False, mode=mode)
         if not response: return None
         
         try:
