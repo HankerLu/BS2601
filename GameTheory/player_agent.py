@@ -1,4 +1,5 @@
 import json
+import os
 from typing import List, Dict, Any
 from llm_wraper import LLMWrapper
 
@@ -7,39 +8,37 @@ class PrisonerAgent:
     参与囚徒困境博弈的智能体选手 (Player Agent)。
     基于 LLMWrapper 进行思考和决策。
     """
-    def __init__(self, name: str, llm: LLMWrapper, max_rounds: int = 5):
+    def __init__(self, name: str, llm: LLMWrapper, max_rounds: int = 5, config_path: str = "default_agent_config.json"):
         self.name = name
         self.llm = llm
         self.max_rounds = max_rounds
         self.history: List[Dict[str, Any]] = []
         
-        # 定义博弈规则描述
-        self.rules_description = f"""
-【囚徒困境博弈规则 - 基础双人版】
-你是一名参与囚徒困境博弈的选手。你的目标是在多轮博弈中尽可能获得更高的总分。
+        # 加载配置
+        self.config = self._load_config(config_path)
 
-【重要】决策机制：
-- 每一轮，你和对手必须**同时且独立**地做出选择，双方互不知晓对方的决策。
-- 不存在任何先后顺序，也无法根据对方本轮的选择来调整自己的决策。
-- 你只能基于前面几轮的记录来预测对手的行为模式，而无法看到对方当前轮次的选择。
-
-每轮你需要在"合作"（不揭发）和"背叛"（揭发）之间做出选择。
-
-得分规则如下：
-1. 互相合作（两人都不揭发）：各得 3 分（双赢基础分）。
-2. 互相背叛（两人互相揭发）：各得 1 分（重罚，双输最低分）。
-3. 一方背叛，一方合作：
-   - 背叛者（揭发的一方）得 5 分（最大收益，完胜）。
-   - 合作者（被揭发的一方）得 0 分（最大亏损，完败）。
-
-请基于博弈论逻辑、历史对手行为模式以及得分最大化原则进行思考。
-一共有{self.max_rounds}轮博弈，{self.max_rounds}轮结束后定胜负。
-
-【特别注意】
-- 平局（例如两人总分相同）对你来说**不是**最优结果。你应该竭力争取让自己的总分**超过**对手。
-- 如果在前面的轮次中比分一直胶着（例如一直合作导致分数相同），你必须考虑改变策略以打破僵局，争取利用对手的惯性思维来获取单轮最高分（5分），从而在总分上取得领先。
-- 利益最大化意味着：既要追求高分，更要追求比对手更高的分数。完胜（我方背叛，对手合作）是拉开分差的最佳手段。
-"""
+    def _load_config(self, path: str) -> Dict[str, Any]:
+        """加载 Agent 配置文件"""
+        # 如果路径是相对路径，尝试基于当前工作目录查找
+        if os.path.exists(path):
+            abs_path = path
+        else:
+            # 尝试在当前脚本目录下查找
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            abs_path = os.path.join(current_dir, path)
+            
+        if not os.path.exists(abs_path):
+            print(f"Warning: Config file {path} not found at {abs_path}. Using empty config.")
+            # 这里可以考虑返回一个硬编码的默认配置，以防文件丢失导致程序崩溃
+            # 为了简单起见，这里假设文件一定存在或由外部保证
+            return {}
+            
+        try:
+            with open(abs_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading config: {e}")
+            return {}
 
     def update_history(self, round_num: int, my_action: str, opponent_action: str, my_score: int, opponent_score: int):
         """
@@ -78,12 +77,14 @@ class PrisonerAgent:
         my_total, opp_total = self._get_current_total_scores()
         lines.append(f"\n【当前实时总比分】 我方 {my_total} 分 vs 对手 {opp_total} 分")
         
+        # 使用配置中的策略指导
+        guidance = self.config.get("strategy_guidance", {})
         if my_total == opp_total:
-            lines.append("当前局势：平局。请警惕！平局不是胜利，你需要尝试通过背叛来拉开差距。")
+            lines.append(guidance.get("tie", ""))
         elif my_total > opp_total:
-            lines.append("当前局势：领先。请保持优势。")
+            lines.append(guidance.get("lead", ""))
         else:
-            lines.append("当前局势：落后。你需要激进策略来反超。")
+            lines.append(guidance.get("lag", ""))
             
         return "\n".join(lines)
 
@@ -94,26 +95,21 @@ class PrisonerAgent:
         """
         history_str = self._format_history()
         
-        system_prompt = f"""
-{self.rules_description}
+        # 构造 System Prompt
+        # 填充 max_rounds 参数
+        rules_desc = self.config.get("rules_description", "").format(max_rounds=self.max_rounds)
+        json_instr = self.config.get("json_format_instruction", "")
+        
+        system_prompt = f"{rules_desc}\n\n{json_instr}"
 
-你需要输出一个 JSON 格式的决策结果。
-JSON 格式要求：
-{{
-    "thought": "你的战术分析和思考过程，请结合当前总比分分析。如果是平局，请特别思考如何利用背叛（defect）来突袭对手以获得领先优势。",
-    "action": "你的最终选择，必须是 'cooperate' (代表不揭发/合作) 或 'defect' (代表揭发/背叛) 其中之一"
-}}
-"""
-
-        user_prompt = f"""
-我是选手: {self.name}
-当前是第 {current_round} 轮。
-
-{history_str}
-
-请根据历史记录分析对手的风格，并结合当前总比分做出本轮决策。
-记住：你的目标是赢得比赛（总分高于对手），而不仅仅是合作共赢。如果一直平局，你将无法赢得比赛。
-"""
+        # 构造 User Prompt
+        # 填充 name, current_round, history_str 参数
+        user_prompt_template = self.config.get("user_prompt_template", "")
+        user_prompt = user_prompt_template.format(
+            name=self.name,
+            current_round=current_round,
+            history_str=history_str
+        )
         
         messages = [
             {"role": "system", "content": system_prompt},
@@ -150,7 +146,9 @@ if __name__ == "__main__":
     # 模拟两个 Agent 对战一局
     try:
         wrapper = LLMWrapper() # 需要环境变量中有 API KEY
-        agent1 = PrisonerAgent("Agent A", wrapper)
+        # 确保 default_agent_config.json 存在
+        # 如果需要测试不同配置，可以指定 config_path
+        agent1 = PrisonerAgent("Agent A", wrapper, config_path="default_agent_config.json")
         
         print(f"--- {agent1.name} 开始思考 ---")
         decision = agent1.decide(current_round=1)
