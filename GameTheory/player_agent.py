@@ -7,13 +7,14 @@ class PrisonerAgent:
     参与囚徒困境博弈的智能体选手 (Player Agent)。
     基于 LLMWrapper 进行思考和决策。
     """
-    def __init__(self, name: str, llm: LLMWrapper):
+    def __init__(self, name: str, llm: LLMWrapper, max_rounds: int = 5):
         self.name = name
         self.llm = llm
+        self.max_rounds = max_rounds
         self.history: List[Dict[str, Any]] = []
         
         # 定义博弈规则描述
-        self.rules_description = """
+        self.rules_description = f"""
 【囚徒困境博弈规则 - 基础双人版】
 你是一名参与囚徒困境博弈的选手。你的目标是在多轮博弈中尽可能获得更高的总分。
 
@@ -32,7 +33,7 @@ class PrisonerAgent:
    - 合作者（被揭发的一方）得 0 分（最大亏损，完败）。
 
 请基于博弈论逻辑、历史对手行为模式以及得分最大化原则进行思考。
-一共有5轮博弈，5轮结束后定胜负。
+一共有{self.max_rounds}轮博弈，{self.max_rounds}轮结束后定胜负。
 
 【特别注意】
 - 平局（例如两人总分相同）对你来说**不是**最优结果。你应该竭力争取让自己的总分**超过**对手。

@@ -39,8 +39,8 @@ class GameWorker(QThread):
             p1_name = "选手 A"
             p2_name = "选手 B"
             
-            p1 = PrisonerAgent(p1_name, llm)
-            p2 = PrisonerAgent(p2_name, llm)
+            p1 = PrisonerAgent(p1_name, llm, self.max_rounds)
+            p2 = PrisonerAgent(p2_name, llm, self.max_rounds)
             referee = GameReferee(p1_name, p2_name, max_rounds=self.max_rounds)
             
             self.sig_log.emit(f"对局开始！共 {self.max_rounds} 轮。")
