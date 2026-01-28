@@ -32,7 +32,12 @@ class PrisonerAgent:
    - 合作者（被揭发的一方）得 0 分（最大亏损，完败）。
 
 请基于博弈论逻辑、历史对手行为模式以及得分最大化原则进行思考。
-一共有4轮博弈，4轮结束后定胜负。
+一共有5轮博弈，5轮结束后定胜负。
+
+【特别注意】
+- 平局（例如两人总分相同）对你来说**不是**最优结果。你应该竭力争取让自己的总分**超过**对手。
+- 如果在前面的轮次中比分一直胶着（例如一直合作导致分数相同），你必须考虑改变策略以打破僵局，争取利用对手的惯性思维来获取单轮最高分（5分），从而在总分上取得领先。
+- 利益最大化意味着：既要追求高分，更要追求比对手更高的分数。完胜（我方背叛，对手合作）是拉开分差的最佳手段。
 """
 
     def update_history(self, round_num: int, my_action: str, opponent_action: str, my_score: int, opponent_score: int):
@@ -48,12 +53,18 @@ class PrisonerAgent:
         }
         self.history.append(record)
 
+    def _get_current_total_scores(self) -> tuple[int, int]:
+        """计算当前累计总分"""
+        my_total = sum(r["my_score"] for r in self.history)
+        opp_total = sum(r["opponent_score"] for r in self.history)
+        return my_total, opp_total
+
     def _format_history(self) -> str:
         """
         将历史记录格式化为文本，供 Prompt 使用
         """
         if not self.history:
-            return "目前是第一轮，暂无历史记录。"
+            return "目前是第一轮，暂无历史记录。当前比分: 0 vs 0。"
         
         lines = ["【历史对局记录】"]
         for record in self.history:
@@ -62,6 +73,17 @@ class PrisonerAgent:
                 f"我方选择[{record['my_action']}], 对手选择[{record['opponent_action']}] -> "
                 f"得分: 我方 {record['my_score']}, 对手 {record['opponent_score']}"
             )
+        
+        my_total, opp_total = self._get_current_total_scores()
+        lines.append(f"\n【当前实时总比分】 我方 {my_total} 分 vs 对手 {opp_total} 分")
+        
+        if my_total == opp_total:
+            lines.append("当前局势：平局。请警惕！平局不是胜利，你需要尝试通过背叛来拉开差距。")
+        elif my_total > opp_total:
+            lines.append("当前局势：领先。请保持优势。")
+        else:
+            lines.append("当前局势：落后。你需要激进策略来反超。")
+            
         return "\n".join(lines)
 
     def decide(self, current_round: int) -> Dict[str, Any]:
@@ -77,7 +99,7 @@ class PrisonerAgent:
 你需要输出一个 JSON 格式的决策结果。
 JSON 格式要求：
 {{
-    "thought": "你的战术分析和思考过程，请分析对手可能的策略并制定你的应对方案",
+    "thought": "你的战术分析和思考过程，请结合当前总比分分析。如果是平局，请特别思考如何利用背叛（defect）来突袭对手以获得领先优势。",
     "action": "你的最终选择，必须是 'cooperate' (代表不揭发/合作) 或 'defect' (代表揭发/背叛) 其中之一"
 }}
 """
@@ -88,7 +110,8 @@ JSON 格式要求：
 
 {history_str}
 
-请根据历史记录分析对手的风格（例如：是报复型、老好人型、随机型还是欺诈型），并结合博弈规则做出本轮决策。
+请根据历史记录分析对手的风格，并结合当前总比分做出本轮决策。
+记住：你的目标是赢得比赛（总分高于对手），而不仅仅是合作共赢。如果一直平局，你将无法赢得比赛。
 """
         
         messages = [
@@ -98,7 +121,7 @@ JSON 格式要求：
 
         # 调用 LLM 生成决策
         # 使用较低的 temperature 保证决策逻辑的一致性
-        result = self.llm.generate_json(messages, temperature=0.2, mode=f"{self.name}_Round_{current_round}")
+        result = self.llm.generate_json(messages, temperature=0.3, mode=f"{self.name}_Round_{current_round}")
 
         # 容错处理：如果解析失败或格式不对，默认选择合作（或者根据需求设为背叛）
         # 这里我们做一个简单的结构校验
