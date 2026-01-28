@@ -160,7 +160,7 @@ class PlayerPanel(QGroupBox):
             self.config_edit.setText(filename)
 
     def preview_config(self):
-        """预览选中的配置文件"""
+        """预览选中的配置文件，以友好方式展示"""
         config_path = self.config_path
         if not config_path or not os.path.exists(config_path):
             QMessageBox.warning(self, "错误", "配置文件路径无效")
@@ -169,18 +169,55 @@ class PlayerPanel(QGroupBox):
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 content = json.load(f)
-                formatted_json = json.dumps(content, ensure_ascii=False, indent=2)
             
             dialog = QDialog(self)
             dialog.setWindowTitle(f"配置预览: {os.path.basename(config_path)}")
-            dialog.resize(600, 400)
+            dialog.resize(700, 600)
             
             layout = QVBoxLayout(dialog)
-            text_edit = QTextEdit()
-            text_edit.setPlainText(formatted_json)
-            text_edit.setReadOnly(True)
-            text_edit.setFont(QFont("Courier New", 12))
-            layout.addWidget(text_edit)
+            
+            # 使用 QTextBrowser 显示格式化后的内容
+            text_browser = QTextEdit()
+            text_browser.setReadOnly(True)
+            layout.addWidget(text_browser)
+            
+            # 构建 HTML 内容
+            html_content = f"""
+            <style>
+                h3 {{ color: #2c3e50; background-color: #ecf0f1; padding: 5px; border-radius: 4px; }}
+                p, li {{ font-size: 14px; line-height: 1.6; color: #34495e; }}
+                .highlight {{ color: #e74c3c; font-weight: bold; }}
+                pre {{ background-color: #f8f9fa; padding: 10px; border: 1px solid #ddd; border-radius: 4px; white-space: pre-wrap; }}
+            </style>
+            """
+            
+            # 1. 规则描述
+            rules = content.get("rules_description", "无").replace("\n", "<br>")
+            html_content += f"<h3>📜 规则描述</h3><p>{rules}</p>"
+            
+            # 2. 策略指导
+            guidance = content.get("strategy_guidance", {})
+            html_content += "<h3>💡 策略指导</h3><ul>"
+            if isinstance(guidance, dict):
+                tie = guidance.get("tie", "无")
+                lead = guidance.get("lead", "无")
+                lag = guidance.get("lag", "无")
+                html_content += f"<li><b>⚖️ 平局时:</b> {tie}</li>"
+                html_content += f"<li><b>🚀 领先时:</b> {lead}</li>"
+                html_content += f"<li><b>⚠️ 落后时:</b> {lag}</li>"
+            else:
+                html_content += f"<li>{guidance}</li>"
+            html_content += "</ul>"
+            
+            # 3. 用户提示词模板
+            user_prompt = content.get("user_prompt_template", "无").replace("\n", "<br>")
+            html_content += f"<h3>🗣️ 用户提示词模板</h3><p style='background-color: #fdfefe; padding: 8px; border-left: 3px solid #3498db;'>{user_prompt}</p>"
+            
+            # 4. JSON 格式说明 (可选，折叠或简化)
+            json_instr = content.get("json_format_instruction", "无").replace("\n", "<br>")
+            html_content += f"<h3>🤖 JSON 输出要求</h3><p style='color: #7f8c8d; font-size: 12px;'>{json_instr}</p>"
+            
+            text_browser.setHtml(html_content)
             
             btn = QPushButton("关闭")
             btn.clicked.connect(dialog.accept)
