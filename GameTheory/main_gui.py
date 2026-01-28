@@ -4,7 +4,8 @@ import time
 import concurrent.futures
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QTextEdit, QGroupBox, 
-                             QProgressBar, QMessageBox, QStyleFactory, QSpinBox, QFileDialog, QLineEdit)
+                             QProgressBar, QMessageBox, QStyleFactory, QSpinBox, QFileDialog, QLineEdit, QDialog)
+import os
 from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QFont, QColor, QPalette
 
@@ -124,6 +125,11 @@ class PlayerPanel(QGroupBox):
         self.config_btn = QPushButton("选择配置")
         self.config_btn.clicked.connect(self.choose_config)
         config_layout.addWidget(self.config_btn)
+
+        self.preview_btn = QPushButton("预览")
+        self.preview_btn.clicked.connect(self.preview_config)
+        config_layout.addWidget(self.preview_btn)
+
         layout.addLayout(config_layout)
         
         # 分数显示
@@ -152,6 +158,37 @@ class PlayerPanel(QGroupBox):
         if filename:
             self.config_path = filename
             self.config_edit.setText(filename)
+
+    def preview_config(self):
+        """预览选中的配置文件"""
+        config_path = self.config_path
+        if not config_path or not os.path.exists(config_path):
+            QMessageBox.warning(self, "错误", "配置文件路径无效")
+            return
+
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                content = json.load(f)
+                formatted_json = json.dumps(content, ensure_ascii=False, indent=2)
+            
+            dialog = QDialog(self)
+            dialog.setWindowTitle(f"配置预览: {os.path.basename(config_path)}")
+            dialog.resize(600, 400)
+            
+            layout = QVBoxLayout(dialog)
+            text_edit = QTextEdit()
+            text_edit.setPlainText(formatted_json)
+            text_edit.setReadOnly(True)
+            text_edit.setFont(QFont("Courier New", 12))
+            layout.addWidget(text_edit)
+            
+            btn = QPushButton("关闭")
+            btn.clicked.connect(dialog.accept)
+            layout.addWidget(btn)
+            
+            dialog.exec_()
+        except Exception as e:
+            QMessageBox.warning(self, "错误", f"读取配置文件失败:\n{str(e)}")
 
     def update_score(self, score):
         self.score_label.setText(f"当前得分: {score}")
@@ -263,6 +300,8 @@ class GameWindow(QMainWindow):
         self.start_btn.setEnabled(False)
         self.start_btn.setText("博弈进行中...")
         self.rounds_spin.setEnabled(False)
+        self.panel_p1.config_btn.setEnabled(False)
+        self.panel_p2.config_btn.setEnabled(False)
         
         # 启动线程
         p1_config = self.panel_p1.config_path
@@ -310,6 +349,8 @@ class GameWindow(QMainWindow):
         self.start_btn.setEnabled(True)
         self.start_btn.setText("开始博弈")
         self.rounds_spin.setEnabled(True)
+        self.panel_p1.config_btn.setEnabled(True)
+        self.panel_p2.config_btn.setEnabled(True)
         self.round_label.setText("博弈结束")
         if self.worker:
             self.progress_bar.setValue(self.worker.max_rounds)
