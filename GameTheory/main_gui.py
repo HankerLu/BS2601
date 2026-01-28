@@ -4,7 +4,7 @@ import time
 import concurrent.futures
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QTextEdit, QGroupBox, 
-                             QProgressBar, QMessageBox, QStyleFactory, QSpinBox)
+                             QProgressBar, QMessageBox, QStyleFactory, QSpinBox, QFileDialog, QLineEdit)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QFont, QColor, QPalette
 
@@ -24,9 +24,11 @@ class GameWorker(QThread):
     sig_round_result = pyqtSignal(int, dict, dict, int, int) # round, p1_data, p2_data, s1, s2
     sig_game_over = pyqtSignal(dict) # 最终结果
 
-    def __init__(self, max_rounds=5):
+    def __init__(self, max_rounds=5, p1_config="default_agent_config.json", p2_config="default_agent_config.json"):
         super().__init__()
         self.max_rounds = max_rounds
+        self.p1_config = p1_config
+        self.p2_config = p2_config
         self.is_running = True
 
     def run(self):
@@ -39,8 +41,8 @@ class GameWorker(QThread):
             p1_name = "选手 A"
             p2_name = "选手 B"
             
-            p1 = PrisonerAgent(p1_name, llm, self.max_rounds)
-            p2 = PrisonerAgent(p2_name, llm, self.max_rounds)
+            p1 = PrisonerAgent(p1_name, llm, self.max_rounds, config_path=self.p1_config)
+            p2 = PrisonerAgent(p2_name, llm, self.max_rounds, config_path=self.p2_config)
             referee = GameReferee(p1_name, p2_name, max_rounds=self.max_rounds)
             
             self.sig_log.emit(f"对局开始！共 {self.max_rounds} 轮。")
@@ -107,10 +109,22 @@ class PlayerPanel(QGroupBox):
     """单个选手的显示面板"""
     def __init__(self, title):
         super().__init__(title)
+        self.config_path = "default_agent_config.json"
         self.init_ui()
         
     def init_ui(self):
         layout = QVBoxLayout()
+        
+        # 配置选择
+        config_layout = QHBoxLayout()
+        self.config_edit = QLineEdit(self.config_path)
+        self.config_edit.setReadOnly(True)
+        config_layout.addWidget(self.config_edit)
+        
+        self.config_btn = QPushButton("选择配置")
+        self.config_btn.clicked.connect(self.choose_config)
+        config_layout.addWidget(self.config_btn)
+        layout.addLayout(config_layout)
         
         # 分数显示
         self.score_label = QLabel("当前得分: 0")
@@ -132,6 +146,12 @@ class PlayerPanel(QGroupBox):
         layout.addWidget(self.thought_text)
         
         self.setLayout(layout)
+
+    def choose_config(self):
+        filename, _ = QFileDialog.getOpenFileName(self, "选择配置文件", "", "JSON Files (*.json);;All Files (*)")
+        if filename:
+            self.config_path = filename
+            self.config_edit.setText(filename)
 
     def update_score(self, score):
         self.score_label.setText(f"当前得分: {score}")
@@ -245,7 +265,9 @@ class GameWindow(QMainWindow):
         self.rounds_spin.setEnabled(False)
         
         # 启动线程
-        self.worker = GameWorker(max_rounds=rounds)
+        p1_config = self.panel_p1.config_path
+        p2_config = self.panel_p2.config_path
+        self.worker = GameWorker(max_rounds=rounds, p1_config=p1_config, p2_config=p2_config)
         self.worker.sig_log.connect(self.log)
         self.worker.sig_round_start.connect(self.on_round_start)
         self.worker.sig_agent_thought.connect(self.on_agent_thought)
