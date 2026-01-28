@@ -8,7 +8,7 @@ class PrisonerAgent:
     参与囚徒困境博弈的智能体选手 (Player Agent)。
     基于 LLMWrapper 进行思考和决策。
     """
-    def __init__(self, name: str, llm: LLMWrapper, max_rounds: int = 5, config_path: str = "default_agent_config.json"):
+    def __init__(self, name: str, llm: LLMWrapper, max_rounds: int = 5, config_path: str = "opportunist_agent_config.json"):
         self.name = name
         self.llm = llm
         self.max_rounds = max_rounds
@@ -146,9 +146,9 @@ if __name__ == "__main__":
     # 模拟两个 Agent 对战一局
     try:
         wrapper = LLMWrapper() # 需要环境变量中有 API KEY
-        # 确保 default_agent_config.json 存在
+        # 确保 opportunistic_agent_config.json 存在
         # 如果需要测试不同配置，可以指定 config_path
-        agent1 = PrisonerAgent("Agent A", wrapper, config_path="default_agent_config.json")
+        agent1 = PrisonerAgent("Agent A", wrapper, config_path="opportunist_agent_config.json")
         
         print(f"--- {agent1.name} 开始思考 ---")
         decision = agent1.decide(current_round=1)

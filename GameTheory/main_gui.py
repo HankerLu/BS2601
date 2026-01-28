@@ -25,7 +25,7 @@ class GameWorker(QThread):
     sig_round_result = pyqtSignal(int, dict, dict, int, int) # round, p1_data, p2_data, s1, s2
     sig_game_over = pyqtSignal(dict) # 最终结果
 
-    def __init__(self, max_rounds=5, p1_config="default_agent_config.json", p2_config="default_agent_config.json"):
+    def __init__(self, max_rounds=5, p1_config="opportunist_agent_config.json", p2_config="opportunist_agent_config.json"):
         super().__init__()
         self.max_rounds = max_rounds
         self.p1_config = p1_config
@@ -110,7 +110,7 @@ class PlayerPanel(QGroupBox):
     """单个选手的显示面板"""
     def __init__(self, title):
         super().__init__(title)
-        self.config_path = "default_agent_config.json"
+        self.config_path = "opportunist_agent_config.json"
         self.init_ui()
         
     def init_ui(self):
