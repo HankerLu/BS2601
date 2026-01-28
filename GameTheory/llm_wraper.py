@@ -47,6 +47,7 @@ class LLMWrapper:
         # 创建会话日志文件（记录本次运行的所有API调用）
         session_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.session_log_file = os.path.join(self.log_dir, f"session_{session_timestamp}.jsonl")
+        self.readable_log_file = os.path.join(self.log_dir, f"session_{session_timestamp}_readable.txt")
         
         self.session = requests.Session()
         # 定义重试策略
@@ -63,7 +64,7 @@ class LLMWrapper:
         self.session.mount("https://", adapter)
         self.session.mount("http://", adapter)
 
-        print(f"云端多模态API客户端初始化成功。日志文件: {self.session_log_file}")
+        print(f"云端多模态API客户端初始化成功。日志文件: {self.session_log_file} (及 readable txt)")
 
     def _clean_and_parse_json(self, response_str: str):
         """
@@ -139,10 +140,61 @@ class LLMWrapper:
 
 
     def _save_api_log(self, log_entry):
-        """保存API调用日志到文件"""
+        """保存API调用日志到文件（同时保存机器可读的jsonl和人类可读的txt）"""
         try:
+            # 1. 保存 JSONL (机器可读)
             with open(self.session_log_file, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+            
+            # 2. 保存 TXT (人类可读)
+            with open(self.readable_log_file, 'a', encoding='utf-8') as f:
+                # 提取关键信息
+                timestamp = log_entry.get("timestamp", "N/A")
+                mode = log_entry.get("mode", "Unknown Mode")
+                request = log_entry.get("request", {})
+                response = log_entry.get("response", {})
+                
+                f.write(f"【{mode}】 @ {timestamp}\n")
+                f.write("-" * 80 + "\n")
+                
+                # 打印请求 (Messages)
+                messages = request.get("messages", [])
+                f.write("📝 [Request / Prompt]\n")
+                for msg in messages:
+                    role = msg.get("role", "unknown")
+                    content = msg.get("content", "")
+                    f.write(f"  [{role.upper()}]:\n")
+                    # 缩进内容以便阅读
+                    for content_line in content.split('\n'):
+                        f.write(f"    {content_line}\n")
+                    f.write("\n")
+                
+                # 打印响应 (Response)
+                f.write("🤖 [Response / AI Output]\n")
+                if response:
+                    choices = response.get("choices", [])
+                    if choices:
+                        content = choices[0].get("message", {}).get("content", "")
+                        try:
+                            # 尝试解析响应中的 JSON 字符串以便更漂亮地打印
+                            content_json = json.loads(content)
+                            formatted_json = json.dumps(content_json, indent=4, ensure_ascii=False)
+                            f.write(f"{formatted_json}\n")
+                        except (json.JSONDecodeError, TypeError):
+                            # 如果不是 JSON 或解析失败，直接打印
+                            f.write(f"{content}\n")
+                    else:
+                        # 可能是错误或其他类型的响应
+                        f.write(json.dumps(response, indent=2, ensure_ascii=False) + "\n")
+                else:
+                    error = log_entry.get("error")
+                    if error:
+                        f.write(f"❌ [Error]: {error}\n")
+                    else:
+                        f.write("(No response content)\n")
+                
+                f.write("=" * 80 + "\n\n")
+
         except Exception as e:
             print(f"  - [Warning] 日志保存失败: {e}")
 
