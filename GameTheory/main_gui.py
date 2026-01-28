@@ -4,7 +4,7 @@ import time
 import concurrent.futures
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QTextEdit, QGroupBox, 
-                             QProgressBar, QMessageBox, QStyleFactory)
+                             QProgressBar, QMessageBox, QStyleFactory, QSpinBox)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QFont, QColor, QPalette
 
@@ -194,8 +194,18 @@ class GameWindow(QMainWindow):
         self.progress_bar.setValue(0)
         bottom_layout.addWidget(self.progress_bar)
 
+        # 设置区域
+        settings_layout = QHBoxLayout()
+        settings_layout.addWidget(QLabel("博弈轮数:"))
+        self.rounds_spin = QSpinBox()
+        self.rounds_spin.setRange(1, 100)
+        self.rounds_spin.setValue(5)
+        settings_layout.addWidget(self.rounds_spin)
+        settings_layout.addStretch()
+        bottom_layout.addLayout(settings_layout)
+
         # 按钮
-        self.start_btn = QPushButton("开始博弈 (5轮)")
+        self.start_btn = QPushButton("开始博弈")
         self.start_btn.setMinimumHeight(50)
         self.start_btn.setStyleSheet("font-size: 16px; background-color: #3498db; color: white; border-radius: 5px;")
         self.start_btn.clicked.connect(self.start_game)
@@ -220,17 +230,22 @@ class GameWindow(QMainWindow):
         if self.worker is not None and self.worker.isRunning():
             return
             
+        # 获取设定的轮数
+        rounds = self.rounds_spin.value()
+
         # 重置 UI
         self.panel_p1.reset()
         self.panel_p2.reset()
+        self.progress_bar.setRange(0, rounds)
         self.progress_bar.setValue(0)
         self.log_text.clear()
         self.round_label.setText("博弈初始化...")
         self.start_btn.setEnabled(False)
         self.start_btn.setText("博弈进行中...")
+        self.rounds_spin.setEnabled(False)
         
         # 启动线程
-        self.worker = GameWorker(max_rounds=5)
+        self.worker = GameWorker(max_rounds=rounds)
         self.worker.sig_log.connect(self.log)
         self.worker.sig_round_start.connect(self.on_round_start)
         self.worker.sig_agent_thought.connect(self.on_agent_thought)
@@ -239,7 +254,8 @@ class GameWindow(QMainWindow):
         self.worker.start()
 
     def on_round_start(self, round_num):
-        self.round_label.setText(f"--- 第 {round_num} / 5 轮 ---")
+        total_rounds = self.worker.max_rounds if self.worker else self.rounds_spin.value()
+        self.round_label.setText(f"--- 第 {round_num} / {total_rounds} 轮 ---")
         self.progress_bar.setValue(round_num - 1)
 
     def on_agent_thought(self, name, thought):
@@ -270,9 +286,11 @@ class GameWindow(QMainWindow):
 
     def on_game_over(self, result):
         self.start_btn.setEnabled(True)
-        self.start_btn.setText("开始博弈 (5轮)")
+        self.start_btn.setText("开始博弈")
+        self.rounds_spin.setEnabled(True)
         self.round_label.setText("博弈结束")
-        self.progress_bar.setValue(5)
+        if self.worker:
+            self.progress_bar.setValue(self.worker.max_rounds)
         
         winner = result["winner"]
         final_scores = result["final_scores"]
