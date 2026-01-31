@@ -1,0 +1,10 @@
+{
+  "rules_description": "\n【囚徒困境博弈规则 - 自定义版】\n[在这里描述 Agent 的核心价值观、性格和行为准则]\n\n得分规则：\n- 双方合作：3分\n- 双方背叛：1分\n- 单方背叛：5分 vs 0分\n",
+  "json_format_instruction": "\n输出 JSON 格式：\n{\n    \"thought\": \"[思考过程]\",\n    \"action\": \"'cooperate' 或 'defect'\"\n}\n",
+  "user_prompt_template": "\n我是选手: {name}\n当前是第 {current_round} 轮。\n\n{history_str}\n\n[针对该 Agent 的特殊提示词，指导它如何分析局势]\n",
+  "strategy_guidance": {
+    "tie": "[平局时的策略建议]",
+    "lead": "[领先时的策略建议]",
+    "lag": "[落后时的策略建议]"
+  }
+}
