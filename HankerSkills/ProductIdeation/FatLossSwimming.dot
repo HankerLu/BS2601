@@ -1,0 +1,72 @@
+digraph FatLossSwimming {
+    // --- 全局设置 ---
+    graph [
+        rankdir="LR",
+        label="运动受限的减脂人群",
+        labelloc="t",
+        fontsize=20,
+        fontname="SimHei",
+        fontcolor="#d9534f"
+    ];
+    
+    node [
+        shape="box",
+        style="filled,rounded",
+        fillcolor="#e6f0ff",
+        fontname="SimHei",
+        color="#b3cfff"
+    ];
+    
+    edge [
+        color="#808080",
+        fontname="SimHei"
+    ];
+
+    // --- 定义三个角色的"泳道" ---
+
+    subgraph cluster_user {
+        label = "运动受限的减脂人群";
+        style = "filled";
+        fillcolor = "#f8f9fa";
+        
+        U1 [label="明确游泳目标\n2km, 开始游泳"];
+        U2 [label="感到枯燥, 暂停游泳歇息,\n查看运动手表参数"];
+        U3 [label="继续游泳一段距离, 体力不支,\n暂停游泳, 查看参数"];
+        U4 [label="游完剩下的距离"];
+        U5 [label="查看参数\n能量补给"];
+        U6 [label="完成游泳目标,\n测算能量消耗"];
+    }
+
+    subgraph cluster_partner {
+        label = "泳伴";
+        style = "filled";
+        fillcolor = "#f8f9fa";
+
+        P1 [label="游泳陪伴"];
+        P2 [label="提供鼓励"];
+    }
+
+    subgraph cluster_coach {
+        label = "健身教练";
+        style = "filled";
+        fillcolor = "#f8f9fa";
+
+        C1 [label="评估身体状况\n和减脂目标"];
+        C2 [label="提供训练计划"];
+    }
+
+    // --- 定义流程箭头 ---
+
+    // 内部流程
+    U1 -> U2 -> U3 -> U4 -> U5 -> U6;
+    P1 -> P2;
+    C1 -> C2;
+
+    // 跨角色交互流程
+    P2 -> U2; // 泳伴的鼓励在用户感到枯燥时介入
+    C1 -> U1; // 教练的评估帮助用户明确目标
+    C2 -> U2; // 训练计划在用户感到枯燥/疲劳时作为参考
+    
+    // 反馈循环 (用户的数据提供给教练)
+    U5 -> C1 [label="数据提供", style=dashed, constraint=false];
+}

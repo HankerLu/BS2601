@@ -1,0 +1,74 @@
+digraph PostSurgeryRehabilitation {
+    // --- 全局设置 ---
+    graph [
+        rankdir="LR",           // 设置布局方向为从左到右 (Left to Right)
+        label="关节术后康复流程", // 图表标题
+        labelloc="t",           // 标题位置在顶部
+        fontsize=20,
+        fontname="SimHei",      // 使用支持中文的字体，如黑体
+        fontcolor="#d9534f"     // 标题颜色
+    ];
+    
+    node [
+        shape="box",            // 节点形状为方框
+        style="filled,rounded", // 样式为填充、圆角
+        fillcolor="#e6f0ff",    // 节点填充色 (淡蓝色)
+        fontname="SimHei",      // 节点字体
+        color="#b3cfff"         // 节点边框色
+    ];
+    
+    edge [
+        color="#808080",        // 箭头颜色为灰色
+        fontname="SimHei"
+    ];
+
+    // --- 定义三个角色的"泳道" ---
+
+    subgraph cluster_patient {
+        label = "关节术后康复者";
+        style = "filled";
+        fillcolor = "#f8f9fa"; // 泳道背景色
+        
+        P1 [label="选择合适的泳道/泳池"];
+        P2 [label="初次下水试验"];
+        P3 [label="执行游泳方案"];
+        P4 [label="定期复查"];
+        P5 [label="恢复关节活动情况"];
+    }
+
+    subgraph cluster_doctor {
+        label = "骨科医生";
+        style = "filled";
+        fillcolor = "#f8f9fa";
+
+        D1 [label="评估术后情况"];
+        D2 [label="开康复处方"];
+        D3 [label="转介康复科"];
+    }
+
+    subgraph cluster_therapist {
+        label = "康复治疗师";
+        style = "filled";
+        fillcolor = "#f8f9fa";
+
+        T1 [label="评估患者运动能力"];
+        T2 [label="制定游泳方案"];
+        T3 [label="监测/记录数据"];
+        T4 [label="动态调整"];
+    }
+
+    // --- 定义流程箭头 ---
+
+    // 内部流程
+    P1 -> P2 -> P3 -> P4 -> P5;
+    D1 -> D2 -> D3;
+    T1 -> T2 -> T3 -> T4;
+
+    // 跨角色交互流程
+    D3 -> T1 [label="转介"];
+    T2 -> P3 [label="提供方案"];
+    P4 -> T4 [label="反馈情况"];
+    
+    // 反馈循环
+    T4 -> T1 [style=dashed, constraint=false, label="优化调整"]; // constraint=false 避免影响主布局
+}
