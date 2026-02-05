@@ -1,0 +1,31 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TimeWiz Word Cloud</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
+        #canvas { width: 80%; height: 80%; border: 1px solid #ccc; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const list = [["\u6709\u6c27\u62f3\u51fb\u953b\u70bc", 10], ["\u732b\u53d4\u71c3\u8102", 10]];
+        
+        WordCloud(document.getElementById('canvas'), { 
+            list: list,
+            gridSize: 16,
+            weightFactor: function (size) {
+                return Math.pow(size, 2.3) * document.getElementById('canvas').width / 1024;
+            },
+            fontFamily: 'Times, serif',
+            color: 'random-dark',
+            rotateRatio: 0.5,
+            rotationSteps: 2,
+            backgroundColor: '#fff'
+        });
+    </script>
+</body>
+</html>
