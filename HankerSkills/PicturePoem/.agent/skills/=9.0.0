@@ -1,0 +1,6 @@
+Looking in indexes: https://mirrors.aliyun.com/pypi/simple/
+Collecting Pillow
+  Downloading https://mirrors.aliyun.com/pypi/packages/01/9a/632e58ec89a32738cabfd9ec418f0e9898a2b4719afc581f07c04a05e3c9/pillow-12.1.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.0/7.0 MB 49.7 MB/s  0:00:00
+Installing collected packages: Pillow
+Successfully installed Pillow-12.1.0

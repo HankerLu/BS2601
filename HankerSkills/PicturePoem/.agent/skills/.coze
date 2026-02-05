@@ -1,0 +1,6 @@
+[skill]
+  skill_package = "photo-to-tang-poem.skill"
+  name = "photo-to-tang-poem"
+  description = "基于照片生成唐诗/宋词并制作现代风格图文卡片。支持极简杂志风和清新ins风两种卡片样式。智能体负责图像理解、诗词创作和题目设计（2-4字文雅风格），Python脚本负责卡片生成（图像合成、文字渲染、布局控制）。适用于社交媒体分享和文艺创作。"
+  project_name = "拾光成诗"
+  project_description = "照片生成诗词与精美卡片"
