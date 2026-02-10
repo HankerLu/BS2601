@@ -1,66 +1,66 @@
-# Metrics Design Guide for Pretotyping
+# 预型验证的指标设计指南
 
-How to design, track, and analyze metrics for your Pretotyping experiments.
-
----
-
-## Core Principle
-
-> **Track behavior, not opinions**
-
-The only metrics that matter are those that reflect real user actions with real commitment (time, money, effort).
+如何为你的Pretotyping实验设计、追踪和分析指标。
 
 ---
 
-## Metric Selection Framework
+## 核心原则
 
-### 1. Identify Your Core Assumption
+> **追踪行为，而非意见**
 
-Every pretotype tests a hypothesis. Your metrics should directly measure that hypothesis.
-
-**Examples:**
-- Hypothesis: "10% of fitness enthusiasts will sign up for AI coaching"
-  - **Metric**: Signup conversion rate
-  
-- Hypothesis: "Users will pay $10/month for this tool"
-  - **Metric**: Payment completion rate at $10 price point
-  
-- Hypothesis: "People will use this daily"
-  - **Metric**: Daily active users (DAU)
-
-### 2. Choose Leading Indicators
-
-Don't wait for lagging indicators. Track actions that predict success.
-
-| Lagging (Slow) | Leading (Fast) |
-|----------------|----------------|
-| Revenue | Signup rate |
-| Retention | Repeat visits |
-| Referrals | Share clicks |
-| Purchases | Add-to-cart rate |
+唯一重要的指标是那些反映真实用户行为、且伴随真实投入（时间、金钱、精力）的指标。
 
 ---
 
-## Essential Metrics by Pretotype Type
+## 指标选择框架
 
-### Pinocchio (Landing Page)
+### 1. 确定你的核心假设
 
-**Primary Metrics:**
-- **Visitor count**: Total exposures
-- **Email signup rate**: Conversions / Visitors
-- **Click-through rate**: CTA clicks / Visitors
+每个预型验证都在测试一个假设。你的指标应该直接衡量该假设。
 
-**Secondary Metrics:**
-- Time on page
-- Scroll depth
-- Traffic sources
-- Bounce rate
+**示例：**
+- 假设："10%的健身爱好者会注册AI教练服务"
+  - **指标**：注册转化率
 
-**Success Thresholds:**
-- Email signup: > 5% (good), > 10% (excellent)
-- CTA click-through: > 3% (good), > 8% (excellent)
+- 假设："用户愿意为这个工具支付每月$10"
+  - **指标**：$10价位的付款完成率
 
-**Tracking Implementation:**
+- 假设："人们会每天使用这个产品"
+  - **指标**：日活跃用户数（DAU）
+
+### 2. 选择先行指标
+
+不要等待滞后指标。追踪能预测成功的行为。
+
+| 滞后指标（慢） | 先行指标（快） |
+|---------------|---------------|
+| 收入 | 注册率 |
+| 留存率 | 重复访问 |
+| 推荐量 | 分享点击 |
+| 购买量 | 加入购物车率 |
+
+---
+
+## 各预型类型的核心指标
+
+### 皮诺曹（落地页）
+
+**主要指标：**
+- **访客数量**：总曝光量
+- **邮箱注册率**：转化数 / 访客数
+- **点击率**：CTA点击数 / 访客数
+
+**次要指标：**
+- 页面停留时间
+- 滚动深度
+- 流量来源
+- 跳出率
+
+**成功阈值：**
+- 邮箱注册：> 5%（良好），> 10%（优秀）
+- CTA点击率：> 3%（良好），> 8%（优秀）
+
+**追踪实现：**
 ```html
 <!-- Google Analytics 4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
@@ -70,7 +70,7 @@ Don't wait for lagging indicators. Track actions that predict success.
   gtag('js', new Date());
   gtag('config', 'G-XXXXXXXXXX');
   
-  // Track email signup
+  // 追踪邮箱注册
   function trackSignup() {
     gtag('event', 'signup', {
       'event_category': 'engagement',
@@ -82,47 +82,47 @@ Don't wait for lagging indicators. Track actions that predict success.
 
 ---
 
-### Mechanical Turk
+### 机械土耳其人
 
-**Primary Metrics:**
-- **Request volume**: How many people try it
-- **Completion rate**: Requests completed / Requests started
-- **Repeat usage rate**: Users who come back / Total users
+**主要指标：**
+- **请求量**：有多少人尝试使用
+- **完成率**：已完成请求数 / 已发起请求数
+- **重复使用率**：回头用户数 / 总用户数
 
-**Secondary Metrics:**
-- Time to completion
-- User satisfaction (NPS)
-- Feature usage patterns
+**次要指标：**
+- 完成时长
+- 用户满意度（NPS）
+- 功能使用模式
 
-**Success Thresholds:**
-- Completion rate: > 60% (good), > 80% (excellent)
-- Repeat usage: > 20% (good), > 40% (excellent)
+**成功阈值：**
+- 完成率：> 60%（良好），> 80%（优秀）
+- 重复使用率：> 20%（良好），> 40%（优秀）
 
-**Tracking Implementation:**
-- Log every request with timestamp, user ID
-- Track completion status
-- Monitor repeat users (same email/ID)
+**追踪实现：**
+- 记录每个请求的时间戳和用户ID
+- 追踪完成状态
+- 监控回头用户（相同邮箱/ID）
 
 ---
 
-### Fake Door
+### 假门面
 
-**Primary Metrics:**
-- **Click-through rate**: Clicks / Impressions
-- **Email capture rate**: Emails / Clicks
+**主要指标：**
+- **点击率**：点击数 / 展示数
+- **邮箱收集率**：邮箱数 / 点击数
 
-**Secondary Metrics:**
-- User segment analysis (who clicked?)
-- Time of day patterns
-- Device type
+**次要指标：**
+- 用户群体分析（谁点击了？）
+- 时段分布
+- 设备类型
 
-**Success Thresholds:**
-- Click-through: > 10% (good), > 20% (excellent)
-- Email capture: > 30% (good), > 50% (excellent)
+**成功阈值：**
+- 点击率：> 10%（良好），> 20%（优秀）
+- 邮箱收集率：> 30%（良好），> 50%（优秀）
 
-**Tracking Implementation:**
+**追踪实现：**
 ```javascript
-// Track fake door click
+// 追踪假门面点击
 document.getElementById('new-feature-btn').addEventListener('click', function() {
   gtag('event', 'fake_door_click', {
     'feature_name': 'ai_assistant',
@@ -134,117 +134,117 @@ document.getElementById('new-feature-btn').addEventListener('click', function() 
 
 ---
 
-### YouTube Prototype
+### YouTube原型
 
-**Primary Metrics:**
-- **View count**: Total views
-- **View-through rate**: Watched >50% / Total views
-- **Conversion rate**: Signups / Views
+**主要指标：**
+- **播放量**：总播放次数
+- **完播率**：观看超过50%的人数 / 总播放量
+- **转化率**：注册数 / 播放量
 
-**Secondary Metrics:**
-- Engagement rate (likes, comments, shares)
-- Traffic sources
-- Audience retention graph
+**次要指标：**
+- 互动率（点赞、评论、分享）
+- 流量来源
+- 观众留存曲线
 
-**Success Thresholds:**
-- View-through rate: > 40% (good), > 60% (excellent)
-- Conversion rate: > 3% (good), > 8% (excellent)
-- Engagement rate: > 5% (good), > 15% (excellent)
-
----
-
-### Crowdfunding
-
-**Primary Metrics:**
-- **Funding percentage**: Raised / Goal
-- **Backer count**: Number of backers
-- **Average pledge**: Total raised / Backers
-
-**Secondary Metrics:**
-- Conversion rate: Backers / Page visitors
-- Pledge tier distribution
-- Daily funding velocity
-- Referral sources
-
-**Success Thresholds:**
-- Funding %: > 100% (success), > 200% (strong validation)
-- Conversion rate: > 2% (good), > 5% (excellent)
+**成功阈值：**
+- 完播率：> 40%（良好），> 60%（优秀）
+- 转化率：> 3%（良好），> 8%（优秀）
+- 互动率：> 5%（良好），> 15%（优秀）
 
 ---
 
-## Statistical Significance
+### 众筹预售
 
-### Minimum Sample Sizes
+**主要指标：**
+- **众筹完成比例**：已筹金额 / 目标金额
+- **支持者数量**：支持者人数
+- **平均支持金额**：总筹集金额 / 支持者数
 
-Don't make decisions on tiny samples. Use these minimums:
+**次要指标：**
+- 转化率：支持者数 / 页面访客数
+- 支持档位分布
+- 每日筹资速度
+- 推荐来源
 
-| Expected Rate | Minimum Sample Size |
-|---------------|---------------------|
+**成功阈值：**
+- 众筹完成比例：> 100%（成功），> 200%（强力验证）
+- 转化率：> 2%（良好），> 5%（优秀）
+
+---
+
+## 统计显著性
+
+### 最小样本量
+
+不要基于极小的样本做决策。使用以下最小值：
+
+| 预期比率 | 最小样本量 |
+|---------|-----------|
 | 1% | 1,000 |
 | 5% | 400 |
 | 10% | 200 |
 | 20% | 100 |
 | 50% | 50 |
 
-**Formula:**
+**公式：**
 ```
 n = (Z² × p × (1-p)) / e²
 
-Where:
-- Z = 1.96 (for 95% confidence)
-- p = expected conversion rate (as decimal)
-- e = margin of error (typically 0.05)
+其中：
+- Z = 1.96（对应95%置信水平）
+- p = 预期转化率（小数形式）
+- e = 误差范围（通常为0.05）
 ```
 
-### Confidence Intervals
+### 置信区间
 
-Always report confidence intervals, not just point estimates.
+始终报告置信区间，而不仅仅是点估计值。
 
-**Example:**
-- "Conversion rate: 8.5% (95% CI: 5.2% - 11.8%)"
-- This means: We're 95% confident the true rate is between 5.2% and 11.8%
+**示例：**
+- "转化率：8.5%（95%置信区间：5.2% - 11.8%）"
+- 这意味着：我们有95%的信心，真实比率在5.2%到11.8%之间
 
-**Interpretation:**
-- If your target was 10%, and CI includes 10% → Continue testing
-- If your target was 10%, and CI is entirely below 10% → Pivot or stop
-- If your target was 10%, and CI is entirely above 10% → Go!
+**解读：**
+- 如果你的目标是10%，且置信区间包含10% → 继续测试
+- 如果你的目标是10%，且置信区间完全低于10% → 转型或停止
+- 如果你的目标是10%，且置信区间完全高于10% → 继续推进！
 
 ---
 
-## Tracking Implementation
+## 追踪工具实现
 
-### Google Analytics 4 (Free)
+### Google Analytics 4（免费）
 
-**Setup:**
-1. Create GA4 property at analytics.google.com
-2. Add tracking code to all pages
-3. Set up custom events for key actions
+**设置步骤：**
+1. 在 analytics.google.com 创建GA4属性
+2. 在所有页面添加追踪代码
+3. 为关键行为设置自定义事件
 
-**Key Events to Track:**
+**需要追踪的关键事件：**
 ```javascript
-// Page view (automatic)
+// 页面浏览（自动追踪）
 
-// Email signup
+// 邮箱注册
 gtag('event', 'generate_lead', {
   'currency': 'USD',
   'value': 0
 });
 
-// Button click
+// 按钮点击
 gtag('event', 'select_content', {
   'content_type': 'button',
   'content_id': 'cta_signup'
 });
 
-// Video play
+// 视频播放
 gtag('event', 'video_start', {
   'video_title': 'Product Demo'
 });
 ```
 
-### Simple Custom Tracking
+### 简易自定义追踪
 
-For minimal setup, use a simple backend log:
+如需最简设置，可使用简单的后端日志：
 
 ```python
 # track.py
@@ -265,12 +265,12 @@ def track_event(event_name, user_id=None, properties=None):
 
 ---
 
-## Analysis Framework
+## 分析框架
 
-### 1. Calculate Core Metrics
+### 1. 计算核心指标
 
 ```python
-# Example analysis
+# 分析示例
 total_visitors = 1000
 signups = 75
 conversions = 8
@@ -279,7 +279,7 @@ signup_rate = (signups / total_visitors) * 100  # 7.5%
 conversion_rate = (conversions / signups) * 100  # 10.7%
 ```
 
-### 2. Compare to Hypothesis
+### 2. 与假设对比
 
 ```python
 expected_rate = 10.0
@@ -287,142 +287,142 @@ actual_rate = 7.5
 performance = (actual_rate / expected_rate) * 100  # 75%
 
 if performance >= 100:
-    decision = "GO"
+    decision = "继续推进"
 elif performance >= 50:
-    decision = "PIVOT"
+    decision = "转型调整"
 else:
-    decision = "STOP"
+    decision = "停止"
 ```
 
-### 3. Segment Analysis
+### 3. 分群分析
 
-Break down by:
-- **Traffic source**: Organic, paid, social, referral
-- **Device**: Mobile, desktop, tablet
-- **Time**: Weekday vs weekend, time of day
-- **Geography**: Country, city
-- **User type**: New vs returning
+按以下维度细分：
+- **流量来源**：自然流量、付费流量、社交、推荐
+- **设备**：移动端、桌面端、平板
+- **时间**：工作日 vs 周末、不同时段
+- **地域**：国家、城市
+- **用户类型**：新用户 vs 回头用户
 
-**Why:** Often you'll find one segment performs well while others don't.
+**为什么要做分群：** 通常你会发现某个群体表现很好，而其他群体表现不佳。
 
-**Example:**
+**示例：**
 ```
-Overall conversion: 5%
-├─ Mobile: 3% ❌
-├─ Desktop: 8% ✅
-└─ Tablet: 4% ❌
+整体转化率：5%
+├─ 移动端：3% ❌
+├─ 桌面端：8% ✅
+└─ 平板：4% ❌
 
-Decision: Focus on desktop users
+决策：聚焦桌面端用户
 ```
 
 ---
 
-## Common Pitfalls
+## 常见陷阱
 
-### ❌ Vanity Metrics
+### ❌ 虚荣指标
 
-Metrics that look good but don't predict success:
+看起来好看但不能预测成功的指标：
 
-- Page views (without conversion)
-- Social media followers (without engagement)
-- Email list size (without open rates)
-- App downloads (without usage)
+- 页面浏览量（没有转化）
+- 社交媒体粉丝数（没有互动）
+- 邮件列表规模（没有打开率）
+- 应用下载量（没有使用量）
 
-### ❌ Premature Conclusions
+### ❌ 过早下结论
 
-- Testing for too short a time (< 1 week)
-- Too small sample size (< 100 for most tests)
-- Ignoring confidence intervals
-- Cherry-picking favorable data
+- 测试时间太短（< 1周）
+- 样本量太小（大多数测试 < 100）
+- 忽略置信区间
+- 挑选有利的数据
 
-### ❌ Tracking Opinions Instead of Actions
+### ❌ 追踪意见而非行为
 
-**Bad:**
-- "Would you use this?" survey
-- "How much would you pay?" question
-- "Do you like this?" feedback
+**错误做法：**
+- "你会使用这个吗？"的问卷调查
+- "你愿意付多少钱？"的提问
+- "你喜欢这个吗？"的反馈
 
-**Good:**
-- Email signup (commitment of attention)
-- Pre-order (commitment of money)
-- Waitlist join (commitment of time)
+**正确做法：**
+- 邮箱注册（注意力的投入）
+- 预购（金钱的投入）
+- 加入等待名单（时间的投入）
 
 ---
 
-## Metric Dashboard Template
+## 指标仪表板模板
 
-Create a simple dashboard to track progress:
+创建一个简单的仪表板来追踪进度：
 
 ```
-PRETOTYPE METRICS DASHBOARD
+预型验证指标仪表板
 ===========================
 
-Hypothesis: At least 10% of fitness enthusiasts will sign up
+假设：至少10%的健身爱好者会注册
 
-Test Period: Feb 1-14, 2024 (14 days)
-Status: ACTIVE
+测试周期：2024年2月1日-14日（14天）
+状态：进行中
 
-CORE METRICS
+核心指标
 ------------
-Visitors:        847
-Signups:         68
-Conversion:      8.0%
-Target:          10.0%
-Performance:     80% of target
+访客数：        847
+注册数：         68
+转化率：        8.0%
+目标：          10.0%
+达成度：        目标的80%
 
-CONFIDENCE
+置信度
 ----------
-95% CI:          6.1% - 10.2%
-Sample size:     Adequate ✓
-Statistical sig: Not yet
+95% 置信区间：   6.1% - 10.2%
+样本量：        充足 ✓
+统计显著性：    尚未达到
 
-DECISION
+决策
 --------
-Current:         CONTINUE TESTING
-Reason:          CI includes target, need more data
-Next milestone:  1,000 visitors
+当前建议：      继续测试
+原因：          置信区间包含目标值，需要更多数据
+下一里程碑：    1,000名访客
 
-SEGMENTS
+分群数据
 --------
-Mobile:          6.2% (n=423)
-Desktop:         10.1% (n=424) ✓
-Organic:         9.5% (n=312) ✓
-Paid:            7.1% (n=535)
+移动端：        6.2% (n=423)
+桌面端：        10.1% (n=424) ✓
+自然流量：      9.5% (n=312) ✓
+付费流量：      7.1% (n=535)
 ```
 
 ---
 
-## Tools & Resources
+## 工具与资源
 
-### Free Tools
-- **Google Analytics 4**: Comprehensive web analytics
-- **Plausible**: Privacy-friendly, simple analytics
-- **Umami**: Self-hosted, open-source analytics
-- **Mixpanel**: Event-based analytics (free tier)
+### 免费工具
+- **Google Analytics 4**：综合性网站分析
+- **Plausible**：注重隐私、操作简单的分析工具
+- **Umami**：自托管、开源的分析工具
+- **Mixpanel**：基于事件的分析（有免费版）
 
-### Paid Tools (Optional)
-- **Amplitude**: Advanced product analytics
-- **Heap**: Automatic event tracking
-- **Hotjar**: Heatmaps and session recordings
+### 付费工具（可选）
+- **Amplitude**：高级产品分析
+- **Heap**：自动事件追踪
+- **Hotjar**：热力图和会话录制
 
-### Spreadsheet Template
+### 电子表格模板
 
-Use this structure for manual tracking:
+使用以下结构进行手动追踪：
 
-| Date | Visitors | Signups | Conversion % | Notes |
-|------|----------|---------|--------------|-------|
-| 2/1  | 45       | 3       | 6.7%         | Launched |
-| 2/2  | 67       | 5       | 7.5%         | Reddit post |
-| 2/3  | 89       | 9       | 10.1%        | HN front page |
+| 日期 | 访客数 | 注册数 | 转化率 | 备注 |
+|------|-------|-------|-------|------|
+| 2/1  | 45    | 3     | 6.7%  | 上线 |
+| 2/2  | 67    | 5     | 7.5%  | 发布Reddit帖子 |
+| 2/3  | 89    | 9     | 10.1% | 登上HN首页 |
 
 ---
 
-## Next Steps
+## 下一步行动
 
-1. **Define your hypothesis** using XYZ format
-2. **Choose 2-3 key metrics** that directly test it
-3. **Set up tracking** (GA4 or custom)
-4. **Determine success threshold** before launching
-5. **Run test** for 1-2 weeks minimum
-6. **Analyze results** using the scripts in this skill
-7. **Make decision**: Go, Pivot, or Stop
+1. **使用XYZ格式定义你的假设**
+2. **选择2-3个关键指标**直接测试假设
+3. **设置追踪**（GA4或自定义方案）
+4. **在发布前确定成功阈值**
+5. **运行测试**至少1-2周
+6. **分析结果**使用本技能中的脚本
+7. **做出决策**：继续、转型或停止

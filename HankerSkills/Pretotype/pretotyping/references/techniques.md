@@ -1,317 +1,317 @@
-# Pretotyping Techniques Reference
+# 预型验证技术参考手册
 
-Complete guide to all 7 Pretotyping techniques with implementation details, use cases, and examples.
-
----
-
-## 1. Mechanical Turk (机械土耳其人)
-
-### What It Is
-Manually simulate automated or AI-powered features using human operators behind the scenes.
-
-### When to Use
-- Testing AI/ML features before building the technology
-- Validating automation workflows
-- Complex backend systems that would take months to build
-
-### How to Implement
-1. Create the user-facing interface (simple web form, email, chat)
-2. Manually process requests behind the scenes
-3. Deliver results as if automated
-4. Track: request volume, completion rates, user satisfaction
-
-### Example: Zappos
-- Founder photographed shoes at local stores
-- Listed them online without inventory
-- When orders came in, bought shoes and shipped them
-- **Result**: Validated online shoe retail before building infrastructure
-
-### Pros
-- ✅ Zero technical investment
-- ✅ Learn what users actually need
-- ✅ Iterate on UX before automation
-
-### Cons
-- ❌ Not scalable
-- ❌ Labor intensive
-- ❌ Can't test performance-critical features
+全部7种Pretotyping技术的完整指南，包含实施细节、使用场景和示例。
 
 ---
 
-## 2. Pinocchio (皮诺曹)
+## 1. 机械土耳其人（Mechanical Turk）
 
-### What It Is
-Create a "fake but realistic" product experience - usually a landing page or demo that looks real but doesn't have backend functionality.
+### 是什么
+用人工操作在幕后手动模拟自动化或AI驱动的功能。
 
-### When to Use
-- Testing market interest before building
-- Validating value proposition and messaging
-- A/B testing different product concepts
+### 何时使用
+- 在构建技术之前测试AI/ML功能
+- 验证自动化工作流程
+- 需要数月才能开发的复杂后端系统
 
-### How to Implement
-1. Create professional landing page describing the product
-2. Add email signup or "Get Started" button
-3. Track clicks, signups, and engagement
-4. (Optional) Show "coming soon" or waitlist message
+### 如何实施
+1. 创建面向用户的界面（简单的网页表单、邮件、聊天）
+2. 在幕后手动处理请求
+3. 像自动完成一样交付结果
+4. 追踪：请求量、完成率、用户满意度
 
-### Example: Buffer
-- Created simple landing page explaining the product
-- Added pricing tiers and signup buttons
-- Tracked which tier got most interest
-- **Result**: Validated pricing model before writing code
+### 示例：Zappos
+- 创始人在当地鞋店拍摄鞋子照片
+- 在网上展示但不持有库存
+- 有人下单时，才去购买鞋子并发货
+- **结果**：在构建基础设施之前就验证了在线鞋类零售的可行性
 
-### Pros
-- ✅ Can be built in 1-2 days
-- ✅ Tests messaging and positioning
-- ✅ Builds email list for launch
+### 优势
+- ✅ 零技术投入
+- ✅ 了解用户真正需要什么
+- ✅ 在自动化之前先优化用户体验
 
-### Cons
-- ❌ Doesn't validate actual product usage
-- ❌ Can disappoint early users if delayed
-- ❌ Only tests initial interest, not retention
-
----
-
-## 3. Fake Door (假门面)
-
-### What It Is
-Add a menu item, button, or feature announcement to an existing product that doesn't actually work yet. Track how many users click it.
-
-### When to Use
-- Testing new features in existing products
-- Prioritizing feature roadmap
-- Validating demand before development
-
-### How to Implement
-1. Add UI element for the "new feature"
-2. When clicked, show "Coming Soon" message
-3. (Optional) Collect email for early access
-4. Track click-through rate
-
-### Example: Amazon
-- Frequently tests new features with "Coming Soon" badges
-- Measures interest before full development
-- **Result**: Data-driven feature prioritization
-
-### Pros
-- ✅ Minimal development effort
-- ✅ Tests with existing user base
-- ✅ Clear demand signal
-
-### Cons
-- ❌ Can frustrate users if overused
-- ❌ Only works with existing products
-- ❌ Doesn't test actual usage patterns
+### 劣势
+- ❌ 不可扩展
+- ❌ 人力密集
+- ❌ 无法测试性能要求高的功能
 
 ---
 
-## 4. One Feature (单一功能版本)
+## 2. 皮诺曹（Pinocchio）
 
-### What It Is
-Build only the absolute core feature, stripping away everything else. The most minimal viable product possible.
+### 是什么
+创建一个"虚假但逼真"的产品体验——通常是一个看起来很真实但没有后端功能的落地页或演示。
 
-### When to Use
-- When you have multiple feature ideas but unsure which is core
-- Testing if core value prop is compelling enough
-- Limited development resources
+### 何时使用
+- 在开发之前测试市场兴趣
+- 验证价值主张和营销话术
+- A/B测试不同的产品概念
 
-### How to Implement
-1. Identify the ONE core value proposition
-2. Build only that feature (ignore nice-to-haves)
-3. Launch to small audience
-4. Measure: usage frequency, retention, willingness to pay
+### 如何实施
+1. 创建专业的落地页来描述产品
+2. 添加邮箱注册或"立即开始"按钮
+3. 追踪点击量、注册量和用户参与度
+4. （可选）显示"即将推出"或等待名单信息
 
-### Example: Instagram
-- Started as Burbn (location check-in app with many features)
-- Noticed photo-sharing was most used
-- Stripped everything except photo filters and sharing
-- **Result**: Explosive growth after focusing on one feature
+### 示例：Buffer
+- 创建了简单的落地页来解释产品
+- 添加了定价层级和注册按钮
+- 追踪哪个层级获得最多关注
+- **结果**：在写代码之前就验证了定价模型
 
-### Pros
-- ✅ Fast to build
-- ✅ Validates core value
-- ✅ Easy to iterate
+### 优势
+- ✅ 1-2天即可搭建
+- ✅ 测试营销话术和市场定位
+- ✅ 为产品上线积累邮件列表
 
-### Cons
-- ❌ Still requires development
-- ❌ May seem incomplete to users
-- ❌ Hard to know which feature to keep
-
----
-
-## 5. YouTube Prototype (YouTube原型)
-
-### What It Is
-Create a video demonstrating your product concept, showing how it would work and what problems it solves.
-
-### When to Use
-- Complex products hard to explain in text
-- Physical products or hardware
-- Novel interaction paradigms
-
-### How to Implement
-1. Script the video (problem → solution → demo)
-2. Create mockups or use existing tools to simulate
-3. Record 2-5 minute video
-4. Share on YouTube, social media, landing page
-5. Track: views, engagement, comments, signup rate
-
-### Example: Dropbox
-- Created 3-minute demo video showing file syncing
-- Posted to Hacker News
-- **Result**: Waitlist grew from 5,000 to 75,000 overnight
-
-### Pros
-- ✅ Shows complex concepts clearly
-- ✅ Shareable and viral potential
-- ✅ No actual product needed
-
-### Cons
-- ❌ Requires video production skills
-- ❌ Doesn't validate actual usage
-- ❌ Can set wrong expectations
+### 劣势
+- ❌ 无法验证实际产品使用情况
+- ❌ 如果产品延迟上线可能让早期用户失望
+- ❌ 只测试初始兴趣，不测试留存
 
 ---
 
-## 6. Cardboard Prototype (纸板原型)
+## 3. 假门面（Fake Door）
 
-### What It Is
-Use cardboard, paper, or other cheap materials to create a physical mockup of your product.
+### 是什么
+在现有产品中添加一个菜单项、按钮或功能预告，但实际上该功能尚未开发。追踪有多少用户点击它。
 
-### When to Use
-- Physical products or hardware
-- Testing form factor and ergonomics
-- User interaction patterns
+### 何时使用
+- 在现有产品中测试新功能
+- 确定功能路线图的优先级
+- 在开发之前验证需求
 
-### How to Implement
-1. Sketch product dimensions
-2. Build mockup with cardboard/foam/paper
-3. Carry it with you or give to test users
-4. Observe: Do they actually use it? How? When?
+### 如何实施
+1. 为"新功能"添加UI元素
+2. 用户点击后，显示"即将推出"消息
+3. （可选）收集邮箱以获得抢先体验资格
+4. 追踪点击率
 
-### Example: Palm Pilot
-- Founder carved wood block to size of planned PDA
-- Carried it for weeks, pretending to use it
-- Noted when he "needed" to check calendar, take notes
-- **Result**: Informed actual product design and features
+### 示例：Amazon
+- 经常用"即将推出"标签测试新功能
+- 在全面开发前衡量用户兴趣
+- **结果**：数据驱动的功能优先级排序
 
-### Pros
-- ✅ Extremely cheap (< $10)
-- ✅ Fast iteration (hours, not weeks)
-- ✅ Tests real-world usage
+### 优势
+- ✅ 开发工作量极少
+- ✅ 可以利用现有用户群测试
+- ✅ 清晰的需求信号
 
-### Cons
-- ❌ Only for physical products
-- ❌ Can't test functionality
-- ❌ Limited to form factor testing
-
----
-
-## 7. Crowdfunding (众筹预售)
-
-### What It Is
-Launch a crowdfunding campaign (Kickstarter, Indiegogo) to validate demand and pre-sell your product before building it.
-
-### When to Use
-- Physical products with clear concept
-- When you need funding anyway
-- Testing price sensitivity
-
-### How to Implement
-1. Create compelling campaign page (video, images, story)
-2. Set funding goal (minimum viable production run)
-3. Offer product as reward at target price
-4. Launch campaign for 30-60 days
-5. Measure: funding %, backer count, average pledge
-
-### Example: Pebble Watch
-- Set $100K goal for smartwatch
-- Raised $10M+ from 68,000 backers
-- **Result**: Validated massive demand + funded production
-
-### Pros
-- ✅ Real money commitment (strongest signal)
-- ✅ Funds development if successful
-- ✅ Builds community pre-launch
-
-### Cons
-- ❌ Public failure if unsuccessful
-- ❌ Obligation to deliver
-- ❌ Requires polished presentation
+### 劣势
+- ❌ 过度使用会让用户反感
+- ❌ 只适用于已有产品
+- ❌ 无法测试实际使用模式
 
 ---
 
-## Technique Selection Guide
+## 4. 单一功能版本（One Feature）
 
-| Product Type | Recommended Techniques | Timeframe |
-|--------------|------------------------|-----------|
-| **SaaS / Web App** | Pinocchio, Fake Door, YouTube Prototype | 3-7 days |
-| **Mobile App** | YouTube Prototype, One Feature, Pinocchio | 5-14 days |
-| **AI / Automation** | Mechanical Turk, Pinocchio | 7-14 days |
-| **Physical Product** | Cardboard Prototype, Crowdfunding, YouTube | 7-30 days |
-| **New Feature** | Fake Door, One Feature | 1-3 days |
-| **Hardware / IoT** | YouTube Prototype, Cardboard, Crowdfunding | 14-60 days |
+### 是什么
+只开发最核心的那一个功能，去掉其他所有东西。最精简的可行产品。
 
-## Combining Techniques
+### 何时使用
+- 有多个功能想法但不确定哪个是核心
+- 测试核心价值主张是否足够有吸引力
+- 开发资源有限
 
-Often the best approach is to use multiple techniques in sequence:
+### 如何实施
+1. 确定唯一的核心价值主张
+2. 只开发那一个功能（忽略锦上添花的部分）
+3. 向小范围受众发布
+4. 衡量：使用频率、留存率、付费意愿
 
-1. **Week 1**: YouTube Prototype → Measure interest
-2. **Week 2**: Pinocchio Landing Page → Collect emails
-3. **Week 3**: Mechanical Turk → Test actual usage
-4. **Week 4**: Analyze data → Go/Pivot/Stop decision
+### 示例：Instagram
+- 最初是Burbn（一个包含多种功能的位置签到应用）
+- 发现照片分享是使用最多的功能
+- 去掉了除照片滤镜和分享以外的所有功能
+- **结果**：聚焦单一功能后实现了爆发式增长
 
-## Success Metrics by Technique
+### 优势
+- ✅ 开发速度快
+- ✅ 验证核心价值
+- ✅ 易于迭代
 
-| Technique | Key Metrics | Good Threshold |
-|-----------|-------------|----------------|
-| Mechanical Turk | Completion rate, repeat usage | > 20% repeat |
-| Pinocchio | Email signup rate | > 5% |
-| Fake Door | Click-through rate | > 10% |
-| One Feature | Daily active users, retention | > 40% D7 retention |
-| YouTube Prototype | View-to-signup ratio | > 3% |
-| Cardboard Prototype | Usage frequency | Daily use |
-| Crowdfunding | Funding % achieved | > 100% |
-
----
-
-## Common Mistakes
-
-### ❌ Making it too polished
-- Pretotypes should be rough
-- Don't waste time on perfection
-- Focus on validating the core assumption
-
-### ❌ Testing with friends/family
-- They'll be too nice
-- Need real target users
-- Pay for ads if needed to reach strangers
-
-### ❌ Ignoring negative signals
-- If people don't engage, that's data
-- Don't rationalize away bad results
-- Pivot or stop quickly
-
-### ❌ Running test too short
-- Need at least 1-2 weeks
-- Allow time for word-of-mouth
-- Weekday vs weekend behavior differs
+### 劣势
+- ❌ 仍然需要开发
+- ❌ 对用户来说可能显得不完整
+- ❌ 难以判断应该保留哪个功能
 
 ---
 
-## Next Steps After Pretotyping
+## 5. YouTube原型（YouTube Prototype）
 
-### If GO (≥ 100% of target)
-1. Build minimal prototype
-2. Expand test to larger audience
-3. Start planning full development
+### 是什么
+制作一个视频来演示你的产品概念，展示它如何运作以及解决什么问题。
 
-### If PIVOT (50-99% of target)
-1. Interview users who engaged
-2. Identify what to change
-3. Run new pretotype with adjustments
+### 何时使用
+- 文字难以解释的复杂产品
+- 实体产品或硬件
+- 新颖的交互模式
 
-### If STOP (< 50% of target)
-1. Document learnings
-2. Consider fundamental pivot
-3. Move to different idea
+### 如何实施
+1. 编写视频脚本（问题 → 解决方案 → 演示）
+2. 创建模型或使用现有工具进行模拟
+3. 录制2-5分钟的视频
+4. 分享到YouTube、社交媒体、落地页
+5. 追踪：播放量、互动率、评论、注册转化率
+
+### 示例：Dropbox
+- 制作了3分钟的演示视频展示文件同步功能
+- 发布到Hacker News
+- **结果**：等待名单一夜之间从5,000增长到75,000
+
+### 优势
+- ✅ 能清楚展示复杂概念
+- ✅ 易于分享，有病毒传播潜力
+- ✅ 不需要实际产品
+
+### 劣势
+- ❌ 需要视频制作技能
+- ❌ 无法验证实际使用情况
+- ❌ 可能造成错误预期
+
+---
+
+## 6. 纸板原型（Cardboard Prototype）
+
+### 是什么
+用纸板、纸张或其他廉价材料制作产品的实体模型。
+
+### 何时使用
+- 实体产品或硬件
+- 测试外形尺寸和人体工程学
+- 用户交互模式
+
+### 如何实施
+1. 画出产品尺寸草图
+2. 用纸板/泡沫/纸张制作模型
+3. 随身携带或交给测试用户
+4. 观察：他们是否真的会使用？怎么使用？什么时候使用？
+
+### 示例：Palm Pilot
+- 创始人将木块削成计划中PDA的大小
+- 随身携带数周，假装使用
+- 记录每次"需要"查看日历、做笔记的时刻
+- **结果**：指导了实际产品的设计和功能
+
+### 优势
+- ✅ 极其便宜（< $10）
+- ✅ 快速迭代（几小时，而非几周）
+- ✅ 测试真实使用场景
+
+### 劣势
+- ❌ 仅适用于实体产品
+- ❌ 无法测试功能性
+- ❌ 仅限于外形测试
+
+---
+
+## 7. 众筹预售（Crowdfunding）
+
+### 是什么
+在众筹平台（Kickstarter、Indiegogo）上发起活动，在产品开发之前验证需求并预售。
+
+### 何时使用
+- 概念明确的实体产品
+- 本身就需要融资的项目
+- 测试价格敏感度
+
+### 如何实施
+1. 创建有说服力的活动页面（视频、图片、故事）
+2. 设定众筹目标（最小可行生产批量）
+3. 以目标价格提供产品作为回报
+4. 发起30-60天的活动
+5. 衡量：众筹完成比例、支持者数量、平均支持金额
+
+### 示例：Pebble智能手表
+- 设定$100K的智能手表众筹目标
+- 从68,000名支持者中筹集了超过$10M
+- **结果**：验证了巨大需求 + 为生产提供了资金
+
+### 优势
+- ✅ 真金白银的投入（最强验证信号）
+- ✅ 成功则可直接资助开发
+- ✅ 产品上线前就建立了社区
+
+### 劣势
+- ❌ 失败则公开可见
+- ❌ 有交付义务
+- ❌ 需要精心准备的展示材料
+
+---
+
+## 技术选择指南
+
+| 产品类型 | 推荐技术 | 时间周期 |
+|---------|---------|---------|
+| **SaaS / Web应用** | 皮诺曹、假门面、YouTube原型 | 3-7天 |
+| **移动App** | YouTube原型、单一功能版本、皮诺曹 | 5-14天 |
+| **AI / 自动化产品** | 机械土耳其人、皮诺曹 | 7-14天 |
+| **实体产品** | 纸板原型、众筹预售、YouTube原型 | 7-30天 |
+| **新功能** | 假门面、单一功能版本 | 1-3天 |
+| **硬件 / 物联网** | YouTube原型、纸板原型、众筹预售 | 14-60天 |
+
+## 组合使用技术
+
+通常最佳方法是按顺序使用多种技术：
+
+1. **第1周**：YouTube原型 → 衡量兴趣
+2. **第2周**：皮诺曹落地页 → 收集邮箱
+3. **第3周**：机械土耳其人 → 测试实际使用
+4. **第4周**：分析数据 → 做出继续/转型/停止的决策
+
+## 各技术的成功指标
+
+| 技术 | 关键指标 | 良好阈值 |
+|-----|---------|---------|
+| 机械土耳其人 | 完成率、重复使用率 | > 20% 重复使用 |
+| 皮诺曹 | 邮箱注册率 | > 5% |
+| 假门面 | 点击率 | > 10% |
+| 单一功能版本 | 日活用户数、留存率 | > 40% 7日留存 |
+| YouTube原型 | 观看到注册的转化率 | > 3% |
+| 纸板原型 | 使用频率 | 每日使用 |
+| 众筹预售 | 众筹完成百分比 | > 100% |
+
+---
+
+## 常见错误
+
+### ❌ 做得太精致
+- 预型验证应该是粗糙的
+- 不要在完美上浪费时间
+- 聚焦于验证核心假设
+
+### ❌ 只找朋友/家人测试
+- 他们会过于客气
+- 需要真正的目标用户
+- 必要时花钱投广告来触达陌生人
+
+### ❌ 忽视负面信号
+- 如果人们不参与，这本身就是数据
+- 不要为糟糕的结果找借口
+- 快速转型或停止
+
+### ❌ 测试时间太短
+- 至少需要1-2周
+- 需要留出口碑传播的时间
+- 工作日和周末的行为会有差异
+
+---
+
+## 预型验证之后的下一步
+
+### 如果结果是继续（≥ 目标的100%）
+1. 开发最小化原型
+2. 将测试扩大到更大的受众
+3. 开始规划完整的开发
+
+### 如果结果是转型（目标的50-99%）
+1. 访谈参与过的用户
+2. 找出需要改变的地方
+3. 调整后重新进行预型验证
+
+### 如果结果是停止（< 目标的50%）
+1. 记录学到的经验
+2. 考虑根本性的转型
+3. 转向不同的创意

@@ -1,219 +1,219 @@
 ---
 name: pretotyping
-description: Generate standardized product validation plans using Pretotyping methodology. Takes user's product idea (with optional follow-up questions) and outputs a three-part plan - XYZ hypothesis, localized pretotype implementation steps, and YODA data evaluation guide. Use when users want to validate product ideas, test market demand, or make data-driven go/pivot/stop decisions before investing in development.
+description: 使用Pretotyping（预型验证）方法论生成标准化的产品验证方案。接受用户的产品创意（可选后续追问），输出三部分方案——XYZ假设、本地化的预型实施步骤、以及YODA数据评估指南。适用于用户希望验证产品创意、测试市场需求、或在投入开发前做出数据驱动的继续/转型/停止决策时使用。
 ---
 
-# Pretotyping Skill V2
+# Pretotyping（预型验证）技能 V2
 
-Transform product ideas into actionable validation plans using the Pretotyping methodology from "做对产品".
+运用《做对产品》中的Pretotyping方法论，将产品创意转化为可执行的验证方案。
 
-## Core Function
+## 核心功能
 
-**Input**: User's product idea (any level of detail)
-**Output**: Standardized three-part validation plan
+**输入**：用户的产品创意（任意详细程度）
+**输出**：标准化的三部分验证方案
 
-## Workflow
+## 工作流程
 
-### Step 1: Collect Product Idea
+### 第一步：收集产品创意
 
-Accept user's product idea in any format:
-- Simple: "我想做一个AI健身教练"
-- Detailed: Complete product description with target users, features, etc.
+接受用户以任何格式描述的产品创意：
+- 简单版："我想做一个AI健身教练"
+- 详细版：包含目标用户、功能特性等的完整产品描述
 
-### Step 2: Gather Missing Information (Max 2 Rounds)
+### 第二步：补充缺失信息（最多2轮）
 
-If information is insufficient, ask clarifying questions:
+如果信息不足，提出澄清问题：
 
-**Round 1 Questions** (ask only if needed):
+**第1轮问题**（仅在需要时提问）：
 - 这个产品解决什么问题？
 - 目标用户是谁？
 - 用户会采取什么行动来使用它？
 
-**Round 2 Questions** (ask only if still needed):
+**第2轮问题**（仅在仍有需要时提问）：
 - 你认为有多少比例的目标用户会使用？
 - 产品形态是什么？（app/网站/实体产品/新功能等）
 
-**Important**: Don't force users to answer all questions. Generate plan with reasonable assumptions if user provides limited info.
+**重要提示**：不要强迫用户回答所有问题。如果用户提供的信息有限，可基于合理假设生成方案。
 
-### Step 3: Generate Standardized Output
+### 第三步：生成标准化输出
 
-Use the template in `templates/output_template.md` to create a complete validation plan with three parts:
+使用 `templates/output_template.md` 中的模板，创建包含三个部分的完整验证方案：
 
-#### Part 1: XYZ Market Validation Hypothesis (Detailed)
+#### 第一部分：XYZ市场验证假设（详细版）
 
-Transform idea into quantifiable hypothesis:
-- **X**: Expected conversion rate (with justification)
-- **Y**: Target user segment (specific demographics, pain points)
-- **Z**: Target action (measurable behavior with skin-in-the-game)
-- Validation criteria (sample size, success threshold, timeframe)
-- Key risk assumptions
+将创意转化为可量化的假设：
+- **X**：预期转化率（附论证依据）
+- **Y**：目标用户群体（具体的人群特征、痛点）
+- **Z**：目标行为（可衡量的、有实际投入的行为）
+- 验证标准（样本量、成功阈值、时间范围）
+- 关键风险假设
 
-#### Part 2: Pretotype Implementation Plan (Detailed - Priority)
+#### 第二部分：预型实施方案（详细版——重点部分）
 
-Provide executable, localized validation plan:
-- **Recommended technique** (from 7 pretotyping techniques)
-- **Step-by-step checklist** (4 phases: Prepare, Build, Reach Users, Collect Data)
-- **Localized for China** (WeChat, Xiaohongshu, Douyin, etc.)
-- **Resource list** (templates, tools, examples)
-- **Cost & time estimate** (realistic breakdown)
-- **FAQ** (common problems and solutions)
+提供可执行的、本地化的验证方案：
+- **推荐技术**（从7种预型验证技术中选择）
+- **分步检查清单**（4个阶段：准备、搭建、触达用户、收集数据）
+- **中国本地化**（微信、小红书、抖音等）
+- **资源清单**（模板、工具、示例）
+- **成本与时间估算**（切合实际的明细）
+- **常见问题**（常见问题及解决方案）
 
-#### Part 3: YODA Data Evaluation Guide (Concise)
+#### 第三部分：YODA数据评估指南（精简版）
 
-Help users evaluate results with their own data:
-- **YODA principle** (Your Own DAta - trust only real behavior)
-- **Skin-in-the-game scale** (money > time > effort > words)
-- **TRI framework** (Think-Refine-Iterate decision logic)
-- **Quick decision tool** (input data → get GO/PIVOT/STOP recommendation)
+帮助用户用自己的数据评估结果：
+- **YODA原则**（Your Own DAta——只相信真实行为数据）
+- **投入度量表**（金钱 > 时间 > 精力 > 口头表态）
+- **TRI框架**（思考-优化-迭代的决策逻辑）
+- **快速决策工具**（输入数据 → 获得继续/转型/停止建议）
 
-## Technique Selection Logic
+## 技术选择逻辑
 
-Match product type to appropriate pretotyping technique:
+根据产品类型匹配合适的预型验证技术：
 
-| Product Type | Primary Technique | Secondary |
-|--------------|-------------------|-----------|
-| SaaS / Web App | Pinocchio (Landing Page) | Fake Door |
-| Mobile App | YouTube Prototype | One Feature |
-| AI / Automation | Mechanical Turk | Pinocchio |
-| Physical Product | Cardboard Prototype | Crowdfunding |
-| New Feature (existing product) | Fake Door | One Feature |
-| Hardware / IoT | YouTube Prototype | Crowdfunding |
+| 产品类型 | 首选技术 | 备选技术 |
+|---------|---------|---------|
+| SaaS / Web应用 | 皮诺曹（落地页） | 假门面 |
+| 移动App | YouTube原型 | 单一功能版本 |
+| AI / 自动化产品 | 机械土耳其人 | 皮诺曹 |
+| 实体产品 | 纸板原型 | 众筹预售 |
+| 新功能（现有产品） | 假门面 | 单一功能版本 |
+| 硬件 / 物联网 | YouTube原型 | 众筹预售 |
 
-**Selection criteria**:
-1. Product complexity
-2. Available resources (time, money, skills)
-3. Target user accessibility
-4. Validation strength needed
+**选择标准**：
+1. 产品复杂度
+2. 可用资源（时间、资金、技能）
+3. 目标用户的可触达性
+4. 所需验证强度
 
-## Localization Guidelines
+## 本地化指南
 
-### For China Market
+### 中国市场
 
-**Platforms**:
-- Social: 微信 (WeChat), 小红书 (Xiaohongshu), 抖音 (Douyin)
-- Community: 知乎 (Zhihu), 豆瓣 (Douban), V2EX
-- E-commerce: 淘宝 (Taobao), 京东 (JD), 拼多多 (Pinduoduo)
+**平台**：
+- 社交：微信（WeChat）、小红书（Xiaohongshu）、抖音（Douyin）
+- 社区：知乎（Zhihu）、豆瓣（Douban）、V2EX
+- 电商：淘宝（Taobao）、京东（JD）、拼多多（Pinduoduo）
 
-**Payment**: 微信支付, 支付宝
+**支付**：微信支付、支付宝
 
-**Tools**:
-- Analytics: 友盟 (Umeng), 神策 (Sensors Data)
-- Forms: 问卷星 (Wenjuanxing), 金数据 (JinShuju)
-- Landing pages: 上线了 (Sxl.cn), Strikingly
+**工具**：
+- 数据分析：友盟（Umeng）、神策（Sensors Data）
+- 表单：问卷星（Wenjuanxing）、金数据（JinShuju）
+- 落地页：上线了（Sxl.cn）、Strikingly
 
-**Compliance**: Mention ICP filing if needed for websites
+**合规要求**：如网站需要，请注意ICP备案
 
-## Key Principles
+## 核心原则
 
-### ✅ DO
+### ✅ 应该做
 
-1. **Generate complete plan** even with minimal input
-2. **Be specific** in implementation steps (exact tools, platforms, costs)
-3. **Localize** for user's market (default to China unless specified)
-4. **Provide templates** and examples wherever possible
-5. **Set realistic expectations** for time and cost
+1. **即使输入信息很少也要生成完整方案**
+2. **实施步骤要具体**（精确到工具、平台、成本）
+3. **本地化**适配用户所在市场（默认为中国市场）
+4. **尽可能提供模板**和示例
+5. **设定切合实际的预期**（时间和成本）
 
-### ❌ DON'T
+### ❌ 不应该做
 
-1. **Don't ask too many questions** (max 2 rounds)
-2. **Don't leave placeholders** (fill in reasonable assumptions)
-3. **Don't be vague** ("use social media" → specify "小红书, 知乎")
-4. **Don't skip cost estimates** (always provide ranges)
-5. **Don't forget localization** (tools, platforms, language)
+1. **不要问太多问题**（最多2轮）
+2. **不要留占位符**（用合理假设填充）
+3. **不要太笼统**（"利用社交媒体" → 明确指出"小红书、知乎"）
+4. **不要跳过成本估算**（始终提供范围）
+5. **不要忽略本地化**（工具、平台、语言）
 
-## Example Usage
+## 使用示例
 
-### Scenario 1: Minimal Input
+### 场景1：最少输入
 
-**User**: "我想做一个帮助职场人学编程的产品"
+**用户**："我想做一个帮助职场人学编程的产品"
 
-**Agent**:
-1. Ask 1-2 clarifying questions
-2. Generate complete plan with assumptions
-3. Output all three parts using template
+**Agent**：
+1. 提出1-2个澄清问题
+2. 基于假设生成完整方案
+3. 使用模板输出全部三个部分
 
-### Scenario 2: Detailed Input
+### 场景2：详细输入
 
-**User**: [Provides complete product description with target users, features, pricing]
+**用户**：[提供包含目标用户、功能特性、定价等的完整产品描述]
 
-**Agent**:
-1. Skip clarifying questions
-2. Generate complete plan based on provided info
-3. Output all three parts using template
+**Agent**：
+1. 跳过澄清问题
+2. 基于提供的信息生成完整方案
+3. 使用模板输出全部三个部分
 
-### Scenario 3: User Has Test Results
+### 场景3：用户已有测试结果
 
-**User**: "我已经测试了2周，有数据了"
+**用户**："我已经测试了2周，有数据了"
 
-**Agent**:
-1. Ask for data (exposures, conversions, expected rate)
-2. Run `scripts/data_analyzer.py` logic
-3. Provide GO/PIVOT/STOP recommendation with next steps
+**Agent**：
+1. 询问数据（曝光量、转化数、预期比率）
+2. 运行 `scripts/data_analyzer.py` 的逻辑
+3. 提供继续/转型/停止的建议及下一步行动
 
-## Resources
+## 资源
 
-### Templates
-- `templates/output_template.md` - Standard three-part output format
+### 模板
+- `templates/output_template.md` - 标准三部分输出格式
 
-### Scripts
-- `scripts/xyz_hypothesis.py` - Calculate sample size and success criteria
-- `scripts/data_analyzer.py` - Analyze test results and recommend decision
-- `scripts/decision_matrix.py` - Visualize performance vs target
+### 脚本
+- `scripts/xyz_hypothesis.py` - 计算样本量和成功标准
+- `scripts/data_analyzer.py` - 分析测试结果并建议决策
+- `scripts/decision_matrix.py` - 可视化呈现表现vs目标
 
-### References
-- `references/techniques.md` - All 7 pretotyping techniques with examples
-- `references/case_studies.md` - Real success stories (Dropbox, Zappos, etc.)
-- `references/metrics.md` - Metrics design and tracking guide
+### 参考资料
+- `references/techniques.md` - 全部7种预型验证技术及示例
+- `references/case_studies.md` - 真实成功案例（Dropbox、Zappos等）
+- `references/metrics.md` - 指标设计与跟踪指南
 
-### Assets
-- `assets/templates/landing_page/` - Ready-to-use landing page template
+### 素材资源
+- `assets/templates/landing_page/` - 即用型落地页模板
 
-## Output Quality Standards
+## 输出质量标准
 
-Every generated plan should:
+每份生成的方案应该：
 
-✅ **Be actionable** - User can start immediately
-✅ **Be specific** - Exact tools, platforms, costs mentioned
-✅ **Be localized** - Appropriate for user's market
-✅ **Be realistic** - Honest about time and cost
-✅ **Be complete** - All three parts filled in (no TBD/TODO)
+✅ **可执行** - 用户可以立即开始行动
+✅ **具体明确** - 提及具体的工具、平台、成本
+✅ **本地化** - 适合用户所在市场
+✅ **切合实际** - 对时间和成本诚实
+✅ **内容完整** - 三个部分全部填写完毕（无待定/待办项）
 
-## Common Scenarios
+## 常见场景
 
-### User unsure about conversion rate
+### 用户不确定转化率
 
-Provide industry benchmarks and suggest conservative estimate (5-10% for most cases)
+提供行业基准数据，建议使用保守估计（大多数情况下5-10%）
 
-### User has no budget
+### 用户没有预算
 
-Focus on free channels and tools, provide "zero-cost" alternative plan
+聚焦免费渠道和工具，提供"零成本"替代方案
 
-### User has no technical skills
+### 用户没有技术能力
 
-Recommend no-code tools, provide step-by-step tutorials, suggest Mechanical Turk technique
+推荐无代码工具，提供分步教程，建议使用机械土耳其人技术
 
-### User wants to test multiple ideas
+### 用户想测试多个创意
 
-Generate separate plan for each, recommend testing sequentially (not parallel)
+为每个创意分别生成方案，建议依次测试（而非同时进行）
 
-## Integration with Scripts
+## 与脚本的集成
 
-While the main output is the markdown plan, you can use scripts for:
+虽然主要输出是markdown方案，但你可以借助脚本：
 
-1. **XYZ Hypothesis** - Use `xyz_hypothesis.py` logic to calculate sample size
-2. **Data Analysis** - When user has results, run `data_analyzer.py` logic
-3. **Decision Matrix** - Generate visual framework with `decision_matrix.py`
+1. **XYZ假设** - 使用 `xyz_hypothesis.py` 的逻辑计算样本量
+2. **数据分析** - 当用户有结果时，运行 `data_analyzer.py` 的逻辑
+3. **决策矩阵** - 使用 `decision_matrix.py` 生成可视化框架
 
-**Note**: Don't require users to run scripts manually. Integrate the logic into your output.
+**注意**：不要要求用户手动运行脚本，将逻辑整合到你的输出中。
 
-## Success Metrics
+## 成功指标
 
-A good validation plan should enable users to:
-- Start validation within 3 days
-- Complete test within 1-2 weeks
-- Spend < ¥1000 (ideally < ¥500)
-- Get clear GO/PIVOT/STOP decision
+一份好的验证方案应能让用户：
+- 在3天内启动验证
+- 在1-2周内完成测试
+- 花费 < ¥1000（理想情况 < ¥500）
+- 得到明确的继续/转型/停止决策
 
 ---
 
-**Remember**: The goal is to help users validate ideas quickly and cheaply before investing in full development. Every plan should embody "用一周验证想法，避免一年的弯路".
+**切记**：目标是帮助用户在投入全面开发之前，快速且低成本地验证创意。每份方案都应体现"用一周验证想法，避免一年的弯路"。
