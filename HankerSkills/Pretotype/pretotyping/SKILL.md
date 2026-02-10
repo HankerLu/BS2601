@@ -1,285 +1,219 @@
 ---
 name: pretotyping
-description: Guide users through the Pretotyping methodology to validate product ideas before investing significant resources. Use when users want to test product ideas, validate market demand, choose validation techniques, or make go/pivot/stop decisions based on data. Helps with hypothesis formation, technique selection, validation tool creation, and data-driven decision making.
+description: Generate standardized product validation plans using Pretotyping methodology. Takes user's product idea (with optional follow-up questions) and outputs a three-part plan - XYZ hypothesis, localized pretotype implementation steps, and YODA data evaluation guide. Use when users want to validate product ideas, test market demand, or make data-driven go/pivot/stop decisions before investing in development.
 ---
 
-# Pretotyping Skill
+# Pretotyping Skill V2
 
-Validate product ideas quickly and cheaply before building. This skill guides you through the complete Pretotyping process from idea to decision.
+Transform product ideas into actionable validation plans using the Pretotyping methodology from "做对产品".
 
-## Quick Start
+## Core Function
 
-Follow this 5-step process:
+**Input**: User's product idea (any level of detail)
+**Output**: Standardized three-part validation plan
 
-1. **Form Hypothesis** → Use `scripts/xyz_hypothesis.py`
-2. **Select Technique** → See technique selection guide below
-3. **Create Pretotype** → Use templates in `assets/` or follow technique guide
-4. **Collect Data** → Track metrics (see `references/metrics.md`)
-5. **Analyze & Decide** → Use `scripts/data_analyzer.py` and `scripts/decision_matrix.py`
+## Workflow
 
-## Core Workflow
+### Step 1: Collect Product Idea
 
-### Step 1: Clarify the Idea
+Accept user's product idea in any format:
+- Simple: "我想做一个AI健身教练"
+- Detailed: Complete product description with target users, features, etc.
 
-Help user articulate their product hypothesis clearly.
+### Step 2: Gather Missing Information (Max 2 Rounds)
 
-**Questions to ask:**
-- What problem does this solve?
-- Who is the target user?
-- What action do you want users to take?
-- What would success look like?
+If information is insufficient, ask clarifying questions:
 
-### Step 2: Form XYZ Hypothesis
+**Round 1 Questions** (ask only if needed):
+- 这个产品解决什么问题？
+- 目标用户是谁？
+- 用户会采取什么行动来使用它？
 
-Use the XYZ hypothesis format: "At least X% of Y (target users) will Z (take action)"
+**Round 2 Questions** (ask only if still needed):
+- 你认为有多少比例的目标用户会使用？
+- 产品形态是什么？（app/网站/实体产品/新功能等）
 
-**Run the hypothesis generator:**
-```bash
-python scripts/xyz_hypothesis.py
-```
+**Important**: Don't force users to answer all questions. Generate plan with reasonable assumptions if user provides limited info.
 
-This will:
-- Validate the hypothesis structure
-- Calculate required sample size
-- Generate success criteria
+### Step 3: Generate Standardized Output
 
-**Interactive mode** guides user through questions.
-**CLI mode** accepts X, Y, Z as arguments for automation.
+Use the template in `templates/output_template.md` to create a complete validation plan with three parts:
 
-### Step 3: Select Pretotyping Technique
+#### Part 1: XYZ Market Validation Hypothesis (Detailed)
 
-Based on product type, recommend appropriate technique(s):
+Transform idea into quantifiable hypothesis:
+- **X**: Expected conversion rate (with justification)
+- **Y**: Target user segment (specific demographics, pain points)
+- **Z**: Target action (measurable behavior with skin-in-the-game)
+- Validation criteria (sample size, success threshold, timeframe)
+- Key risk assumptions
 
-| Product Type | Recommended Technique | Reference |
-|--------------|----------------------|-----------|
-| SaaS / Web App | Pinocchio, Fake Door | [techniques.md](references/techniques.md#2-pinocchio-皮诺曹) |
-| Mobile App | YouTube Prototype, One Feature | [techniques.md](references/techniques.md#5-youtube-prototype-youtube原型) |
-| AI / Automation | Mechanical Turk | [techniques.md](references/techniques.md#1-mechanical-turk-机械土耳其人) |
-| Physical Product | Cardboard Prototype, Crowdfunding | [techniques.md](references/techniques.md#6-cardboard-prototype-纸板原型) |
-| New Feature | Fake Door, One Feature | [techniques.md](references/techniques.md#3-fake-door-假门面) |
+#### Part 2: Pretotype Implementation Plan (Detailed - Priority)
 
-**For detailed technique guides**, direct user to read [references/techniques.md](references/techniques.md).
+Provide executable, localized validation plan:
+- **Recommended technique** (from 7 pretotyping techniques)
+- **Step-by-step checklist** (4 phases: Prepare, Build, Reach Users, Collect Data)
+- **Localized for China** (WeChat, Xiaohongshu, Douyin, etc.)
+- **Resource list** (templates, tools, examples)
+- **Cost & time estimate** (realistic breakdown)
+- **FAQ** (common problems and solutions)
 
-**For real-world examples**, direct user to read [references/case_studies.md](references/case_studies.md).
+#### Part 3: YODA Data Evaluation Guide (Concise)
 
-### Step 4: Create the Pretotype
+Help users evaluate results with their own data:
+- **YODA principle** (Your Own DAta - trust only real behavior)
+- **Skin-in-the-game scale** (money > time > effort > words)
+- **TRI framework** (Think-Refine-Iterate decision logic)
+- **Quick decision tool** (input data → get GO/PIVOT/STOP recommendation)
 
-#### For Landing Pages (Pinocchio technique)
+## Technique Selection Logic
 
-Use the template in `assets/templates/landing_page/`:
+Match product type to appropriate pretotyping technique:
 
-1. Copy `landing_page/index.html`
-2. Replace all `{{PLACEHOLDERS}}` with actual content
-3. Add Google Analytics tracking ID
-4. Deploy to Netlify/Vercel (see README in template folder)
+| Product Type | Primary Technique | Secondary |
+|--------------|-------------------|-----------|
+| SaaS / Web App | Pinocchio (Landing Page) | Fake Door |
+| Mobile App | YouTube Prototype | One Feature |
+| AI / Automation | Mechanical Turk | Pinocchio |
+| Physical Product | Cardboard Prototype | Crowdfunding |
+| New Feature (existing product) | Fake Door | One Feature |
+| Hardware / IoT | YouTube Prototype | Crowdfunding |
 
-**Customization help** is in `assets/templates/landing_page/README.md`.
+**Selection criteria**:
+1. Product complexity
+2. Available resources (time, money, skills)
+3. Target user accessibility
+4. Validation strength needed
 
-#### For Other Techniques
+## Localization Guidelines
 
-Guide user through implementation based on selected technique:
+### For China Market
 
-- **Mechanical Turk**: Create simple interface, process manually
-- **Fake Door**: Add UI element to existing product, track clicks
-- **YouTube Prototype**: Script video, create mockups, record demo
-- **Cardboard Prototype**: Sketch dimensions, build physical mockup
-- **Crowdfunding**: Create campaign page, set funding goal
+**Platforms**:
+- Social: 微信 (WeChat), 小红书 (Xiaohongshu), 抖音 (Douyin)
+- Community: 知乎 (Zhihu), 豆瓣 (Douban), V2EX
+- E-commerce: 淘宝 (Taobao), 京东 (JD), 拼多多 (Pinduoduo)
 
-Refer to [references/techniques.md](references/techniques.md) for detailed implementation steps for each technique.
+**Payment**: 微信支付, 支付宝
 
-### Step 5: Define Success Metrics
+**Tools**:
+- Analytics: 友盟 (Umeng), 神策 (Sensors Data)
+- Forms: 问卷星 (Wenjuanxing), 金数据 (JinShuju)
+- Landing pages: 上线了 (Sxl.cn), Strikingly
 
-Help user set up tracking and define success criteria.
-
-**Key questions:**
-- What metrics directly test your hypothesis?
-- What conversion rate would validate your idea?
-- How much traffic/exposure do you need?
-
-**For metrics guidance**, direct user to [references/metrics.md](references/metrics.md).
-
-**Common metrics by technique:**
-- Pinocchio: Email signup rate (target: >5%)
-- Fake Door: Click-through rate (target: >10%)
-- Mechanical Turk: Repeat usage rate (target: >20%)
-- YouTube Prototype: View-to-signup ratio (target: >3%)
-- Crowdfunding: Funding percentage (target: >100%)
-
-### Step 6: Run the Test
-
-**Duration**: 1-2 weeks minimum
-**Sample size**: Use calculator from `xyz_hypothesis.py` output
-
-**During the test:**
-- Monitor metrics daily
-- Don't make changes mid-test
-- Collect qualitative feedback (but prioritize behavior data)
-
-### Step 7: Analyze Results
-
-Once you have sufficient data, use the analysis scripts:
-
-#### Data Analyzer
-
-```bash
-python scripts/data_analyzer.py
-```
-
-**Interactive mode** asks for:
-- Number of exposures
-- Number of conversions
-- Expected conversion rate
-- Test duration
-
-**Output includes:**
-- Go/Pivot/Stop recommendation
-- Confidence level
-- Performance vs target
-- Specific next steps
-
-#### Decision Matrix
-
-```bash
-python scripts/decision_matrix.py
-```
-
-Generates visual decision framework showing:
-- Performance zones (Go/Pivot/Stop)
-- Your current position
-- Confidence assessment
-- Statistical significance
-
-### Step 8: Make Decision
-
-Based on analysis results:
-
-**🟢 GO (≥100% of target)**
-- Proceed to prototype development
-- Consider expanding test to larger audience
-- Document what worked
-
-**🟡 PIVOT (50-99% of target)**
-- Analyze why conversion is lower
-- Interview engaged users
-- Adjust value prop, pricing, or audience
-- Run new pretotype with changes
-
-**🔴 STOP (<50% of target)**
-- Consider stopping or major pivot
-- Extract learnings
-- Move to different idea or fundamentally different approach
-
-## Common Scenarios
-
-### Scenario: User has vague idea
-
-1. Ask clarifying questions about problem, users, solution
-2. Help form specific XYZ hypothesis
-3. Run `xyz_hypothesis.py` to structure it
-4. Proceed to technique selection
-
-### Scenario: User unsure which technique
-
-1. Ask about product type (SaaS, physical, feature, etc.)
-2. Ask about resources (time, money, technical skills)
-3. Recommend 1-2 techniques from selection guide
-4. Point to relevant sections in `references/techniques.md`
-
-### Scenario: User needs landing page
-
-1. Copy template from `assets/templates/landing_page/`
-2. Help customize placeholders
-3. Set up Google Analytics
-4. Recommend deployment option (Netlify is easiest)
-
-### Scenario: User has test results
-
-1. Run `data_analyzer.py` with their data
-2. Run `decision_matrix.py` for visualization
-3. Interpret results and recommend next steps
-4. If pivot, help identify what to change
-
-### Scenario: User wants examples
-
-Direct to specific case studies in `references/case_studies.md`:
-- Dropbox (YouTube Prototype)
-- Zappos (Mechanical Turk)
-- Buffer (Pinocchio)
-- Palm Pilot (Cardboard Prototype)
-- Instagram (One Feature)
+**Compliance**: Mention ICP filing if needed for websites
 
 ## Key Principles
 
 ### ✅ DO
 
-- **Test behavior, not opinions** - Track actions, not surveys
-- **Start simple** - Use cheapest, fastest validation method
-- **Set criteria first** - Define success before testing
-- **Give it time** - Run for 1-2 weeks minimum
-- **Trust the data** - Make decisions based on results, not gut
+1. **Generate complete plan** even with minimal input
+2. **Be specific** in implementation steps (exact tools, platforms, costs)
+3. **Localize** for user's market (default to China unless specified)
+4. **Provide templates** and examples wherever possible
+5. **Set realistic expectations** for time and cost
 
 ### ❌ DON'T
 
-- **Don't skip validation** - Even "obvious" ideas need testing
-- **Don't over-polish** - Pretotypes should be rough
-- **Don't test with friends** - Need real target users
-- **Don't ignore negative signals** - Bad data is still data
-- **Don't rationalize** - If it's not working, pivot or stop
+1. **Don't ask too many questions** (max 2 rounds)
+2. **Don't leave placeholders** (fill in reasonable assumptions)
+3. **Don't be vague** ("use social media" → specify "小红书, 知乎")
+4. **Don't skip cost estimates** (always provide ranges)
+5. **Don't forget localization** (tools, platforms, language)
+
+## Example Usage
+
+### Scenario 1: Minimal Input
+
+**User**: "我想做一个帮助职场人学编程的产品"
+
+**Agent**:
+1. Ask 1-2 clarifying questions
+2. Generate complete plan with assumptions
+3. Output all three parts using template
+
+### Scenario 2: Detailed Input
+
+**User**: [Provides complete product description with target users, features, pricing]
+
+**Agent**:
+1. Skip clarifying questions
+2. Generate complete plan based on provided info
+3. Output all three parts using template
+
+### Scenario 3: User Has Test Results
+
+**User**: "我已经测试了2周，有数据了"
+
+**Agent**:
+1. Ask for data (exposures, conversions, expected rate)
+2. Run `scripts/data_analyzer.py` logic
+3. Provide GO/PIVOT/STOP recommendation with next steps
 
 ## Resources
 
+### Templates
+- `templates/output_template.md` - Standard three-part output format
+
 ### Scripts
-- `scripts/xyz_hypothesis.py` - Generate and validate hypotheses
-- `scripts/data_analyzer.py` - Analyze test results, get recommendations
-- `scripts/decision_matrix.py` - Visualize decision framework
+- `scripts/xyz_hypothesis.py` - Calculate sample size and success criteria
+- `scripts/data_analyzer.py` - Analyze test results and recommend decision
+- `scripts/decision_matrix.py` - Visualize performance vs target
 
 ### References
-- `references/techniques.md` - All 7 Pretotyping techniques with examples
-- `references/case_studies.md` - Real-world success stories (Dropbox, Zappos, etc.)
-- `references/metrics.md` - Metrics design, tracking, and analysis guide
+- `references/techniques.md` - All 7 pretotyping techniques with examples
+- `references/case_studies.md` - Real success stories (Dropbox, Zappos, etc.)
+- `references/metrics.md` - Metrics design and tracking guide
 
-### Templates
-- `assets/templates/landing_page/` - Ready-to-use landing page for Pinocchio technique
+### Assets
+- `assets/templates/landing_page/` - Ready-to-use landing page template
 
-## Troubleshooting
+## Output Quality Standards
 
-**"Sample size too small"**
-- Continue testing until you reach minimum (from hypothesis generator)
-- Consider paid ads to increase traffic
-- Extend test duration
+Every generated plan should:
 
-**"Results are inconclusive"**
-- Check if confidence interval includes target rate
-- May need more data
-- Consider if you're testing right audience
+✅ **Be actionable** - User can start immediately
+✅ **Be specific** - Exact tools, platforms, costs mentioned
+✅ **Be localized** - Appropriate for user's market
+✅ **Be realistic** - Honest about time and cost
+✅ **Be complete** - All three parts filled in (no TBD/TODO)
 
-**"Conversion is zero"**
-- Check if tracking is working
-- Verify you're reaching target audience
-- May indicate fundamental problem with idea
+## Common Scenarios
 
-**"Don't know what to change for pivot"**
-- Interview users who engaged but didn't convert
-- A/B test different value propositions
-- Try different audience segment
-- Review case studies for inspiration
+### User unsure about conversion rate
 
-## Next Steps After Pretotyping
+Provide industry benchmarks and suggest conservative estimate (5-10% for most cases)
 
-### If validated (GO)
-1. Build minimal prototype (not full product yet)
-2. Expand test to larger audience
-3. Start planning full development
-4. Consider raising funding if needed
+### User has no budget
 
-### If needs adjustment (PIVOT)
-1. Identify specific element to change
-2. Create new hypothesis
-3. Run new pretotype (1-2 weeks)
-4. Repeat until validated or stopped
+Focus on free channels and tools, provide "zero-cost" alternative plan
 
-### If not validated (STOP)
-1. Document learnings
-2. Consider if different approach could work
-3. Move to next idea
-4. Don't view as failure - saved months/years of wasted effort
+### User has no technical skills
+
+Recommend no-code tools, provide step-by-step tutorials, suggest Mechanical Turk technique
+
+### User wants to test multiple ideas
+
+Generate separate plan for each, recommend testing sequentially (not parallel)
+
+## Integration with Scripts
+
+While the main output is the markdown plan, you can use scripts for:
+
+1. **XYZ Hypothesis** - Use `xyz_hypothesis.py` logic to calculate sample size
+2. **Data Analysis** - When user has results, run `data_analyzer.py` logic
+3. **Decision Matrix** - Generate visual framework with `decision_matrix.py`
+
+**Note**: Don't require users to run scripts manually. Integrate the logic into your output.
+
+## Success Metrics
+
+A good validation plan should enable users to:
+- Start validation within 3 days
+- Complete test within 1-2 weeks
+- Spend < ¥1000 (ideally < ¥500)
+- Get clear GO/PIVOT/STOP decision
+
+---
+
+**Remember**: The goal is to help users validate ideas quickly and cheaply before investing in full development. Every plan should embody "用一周验证想法，避免一年的弯路".
