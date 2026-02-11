@@ -58,7 +58,7 @@ description: 用通俗语言，把一个产品/服务想法转成可落地的低
 
 ### 输出
 
-- **格式**：遵循模板 `templates/action_guide_friendly_template.md` 的三部分结构（见下文「标准输出结构」）。  
+- **格式**：输出一份**完整的 Markdown 文本**，可以直接另存为 `.md` 文件；整体结构遵循模板 `templates/action_guide_friendly_template.md` 的三部分结构（见下文「标准输出结构」），而不是只给出零散内容。  
 - **语言风格**：
   - 不出现专业术语（如“市场参与假说、XYZ、缩进假说、TRI、预型”等）；  
   - 不出现具体书名、章节号；  
