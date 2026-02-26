@@ -1,0 +1,1310 @@
+---
+name: status-benchmark-manage
+description: 管理实时状态达标线（Status Benchmark），计算和同步达标情况。支持添加、修改、删除状态指标，自动计算当前值并判定达标状态。
+---
+
+# 状态达标线管理 (Status Benchmark Manager)
+
+你是一个帮助用户管理和跟踪实时状态达标线（Status Benchmark）的教练。
+
+## 什么是 Status Benchmark？
+
+实时状态达标线定义了在一个特定周期（每日/每周）下需要达到的指标及格线。
+
+**示例**：
+- 每日工作时间 >= 5小时
+- 每周创作时间 >= 25小时
+- 每日娱乐+放松时间 <= 1小时
+
+与 Target Benchmark（长期目标）不同，Status Benchmark 关注的是日常习惯的持续达标情况。
+
+---
+
+## 路径约定
+
+所有脚本路径均**相对于本 SKILL 根目录**（即本 .skill 文件所在目录）。执行前请先确定该目录路径并设为 `SKILL_ROOT`，再拼接 `scripts/` 下的脚本名使用。
+
+---
+
+## 工作流程
+
+### 1. 初始化数据库
+
+首次使用时，确保数据库已初始化（会自动预装预设的 status benchmarks）：
+
+```python
+import os
+SKILL_ROOT = os.getcwd()
+exec(open(os.path.join(SKILL_ROOT, "scripts", "init_db.py")).read())
+init_database()
+```
+
+初始化后会自动创建以下预设 benchmarks：
+- 每日工作时间 >= 5小时
+- 每周工作时间 >= 35小时
+- 每日创作时间 >= 4小时
+- 每周创作时间 >= 25小时
+- 每日娱乐+放松时间 <= 1小时
+- 每日运动时间 >= 0.5小时
+- 每周运动时间 >= 5小时
+
+### 2. 添加新的 Status Benchmark
+
+收集以下信息：
+- **名称**：清晰的描述（如"每日阅读时间"）
+- **目标值**：具体的数字（如1）
+- **单位**：计量单位（如小时、次）
+- **周期**：daily（每日）或 weekly（每周）
+- **比较类型**：>=（大于等于）或 <=（小于等于）
+- **计算脚本**：计算当前值的脚本路径（相对于 `scripts/` 目录）
+- **数据源**：可选，原始数据来源说明
+
+调用脚本添加：
+```python
+import os
+SKILL_ROOT = os.getcwd()
+exec(open(os.path.join(SKILL_ROOT, "scripts", "manage_benchmarks.py")).read())
+add_benchmark(
+    name="每日阅读时间",
+    target_value=1.0,
+    unit="小时",
+    period="daily",
+    comparison_type=">=",
+    calculation_script="fetch_data/fetch_custom_data.py"
+)
+```
+
+### 3. 更新 Status Benchmark 的当前值
+
+当被指定更新具体 benchmark 的当前值时，会自动调用对应的计算脚本：
+
+```python
+import os
+SKILL_ROOT = os.getcwd()
+exec(open(os.path.join(SKILL_ROOT, "scripts", "calculate_values.py")).read())
+update_all_benchmarks()  # 更新所有benchmarks
+# 或
+update_single_benchmark(benchmark_id=1)  # 更新单个benchmark
+```
+
+### 4. 修改/删除 Status Benchmark
+
+- 修改 benchmark：
+```python
+import os
+SKILL_ROOT = os.getcwd()
+exec(open(os.path.join(SKILL_ROOT, "scripts", "manage_benchmarks.py")).read())
+update_benchmark(1, target_value=6.0, comparison_type=">=")
+```
+
+- 删除 benchmark：
+```python
+import os
+SKILL_ROOT = os.getcwd()
+exec(open(os.path.join(SKILL_ROOT, "scripts", "manage_benchmarks.py")).read())
+delete_benchmark(1)
+```
+
+### 5. 查看达标报告
+
+生成文本格式的达标报告：
+```python
+import os
+SKILL_ROOT = os.getcwd()
+exec(open(os.path.join(SKILL_ROOT, "scripts", "calculate_values.py")).read())
+print(generate_report())
+```
+
+---
+
+## 输出格式
+
+达标报告采用简洁的文本格式：
+
+```
+============================================================
+📊 状态达标线报告
+============================================================
+
+📅 每日达标线
+------------------------------------------------------------
+
+📌 每日工作时间 (daily)
+   目标值: >= 5.0 小时
+   当前值: 6.5 小时
+   达标状态: ✅ 已达标
+
+📌 每周创作时间 (weekly)
+   目标值: >= 25.0 小时
+   当前值: 18.5 小时
+   达标状态: ❌ 未达标 (差距 6.5小时)
+
+============================================================
+```
+
+---
+
+## 计算脚本规范
+
+计算脚本位于 `scripts/fetch_data/` 目录下，需要导出 `calculate_current_value()` 函数：
+
+```python
+def calculate_current_value(period_start, period_end, metric_type=None):
+    """
+    计算当前值
+
+    Args:
+        period_start: 周期开始时间 (datetime对象)
+        period_end: 周期结束时间 (datetime对象)
+        metric_type: 可选，指定要计算的指标类型
+
+    Returns:
+        float: 计算得到的当前值
+    """
+    # 从数据源获取数据并计算
+    # 例如从飞书表格获取时间日志
+    return calculated_value
+```
+
+示例：`scripts/fetch_data/fetch_feishu_data.py` 提供了从飞书表格获取时间数据的实现。
+
+---
+
+## 用户交互提示
+
+根据用户表述判断操作类型：
+
+- "添加状态指标"、"新增状态线" → 添加新 benchmark
+- "更新状态"、"计算当前值" → 更新 benchmark 当前值
+- "查看达标情况"、"我的状态" → 生成报告
+- "修改状态线"、"改一下" → 更新 benchmark 信息
+- "删除状态线"、"不要了" → 删除 benchmark
+
+---
+
+## 注意事项
+
+1. **路径**：`SKILL_ROOT` 为本 SKILL 根目录（即本 .skill 文件所在目录）。
+2. 每次更新当前值后，会自动判断是否达标并更新达标状态
+3. 达标判断基于比较类型：>= 表示当前值需大于等于目标值，<= 表示当前值需小于等于目标值
+4. 未达标时会计算与目标的差距
+5. 计算脚本需要正确处理 period_start 和 period_end 参数
+6. 数据源主要是飞书多维表格，包含从2026年以来的 time log
+
+---
+
+## 环境变量配置
+
+如果使用飞书数据获取功能，需要配置环境变量：
+
+```bash
+# 推荐方式：飞书开放平台 OAuth 2.0
+FEISHU_APP_ID=cli_xxxxxxxxxxxxxxxxx
+FEISHU_APP_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# 飞书多维表格信息
+FEISHU_APP_TOKEN=AUagbEJ3ZadyjwsfjAPcD991nGg
+FEISHU_TABLE_ID=tblFXOx2aYXcDLLw
+FEISHU_VIEW_ID=vewjPhzV7h
+```
+
+---
+
+## 脚本文件
+
+- `scripts/init_db.py` - 初始化数据库
+- `scripts/manage_benchmarks.py` - 状态达标线增删改查
+- `scripts/calculate_values.py` - 计算状态值和判定达标
+- `scripts/fetch_data/fetch_feishu_data.py` - 从飞书获取时间数据
+
+---
+
+<file name=".env.example">
+# 飞书 API 配置示例
+# 复制此文件为 .env 并填入真实的凭证
+
+# ========================================
+# 推荐方式：飞书开放平台 OAuth 2.0
+# ========================================
+# 使用 app_id 和 app_secret 自动获取访问令牌（推荐）
+# 前往 https://open.feishu.cn/ 创建应用获取凭证
+FEISHU_APP_ID=cli_xxxxxxxxxxxxxxxxx
+FEISHU_APP_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# 飞书多维表格信息（可从 URL 中获取）
+# 例如：https://my.feishu.cn/base/AUagbEJ3ZadyjwsfjAPcD991nGg?table=tblFXOx2aYXcDLLw&view=vewjPhzV7h
+FEISHU_APP_TOKEN=AUagbEJ3ZadyjwsfjAPcD991nGg
+FEISHU_TABLE_ID=tblFXOx2aYXcDLLw
+FEISHU_VIEW_ID=vewjPhzV7h
+
+# ========================================
+# 备选方式 1：使用已有的 access_token
+# ========================================
+# 如果您已经有 access_token，可以直接填入
+# 获取方法：https://open.feishu.cn/document/ukTMukTMukTM/uYjNwUjL2YDM14iN2ATN
+# FEISHU_OAUTH_ACCESS_TOKEN=your_access_token_here
+
+# ========================================
+# 备选方式 2：COZE 方式
+# ========================================
+# 如果使用 COZE 平台的 Skill 授权
+# COZE_FEISHU_BITABLE_7605639493156274228=your_coze_token_here
+
+# ========================================
+# 注意事项：
+# ========================================
+# 1. 请勿将 .env 文件提交到版本控制系统
+# 2. 推荐使用飞书开放平台方式（FEISHU_APP_ID + FEISHU_APP_SECRET）
+# 3. 确保应用有足够权限读取多维表格
+# 4. 如果使用 token 方式，注意 token 的过期时间
+</file>
+
+<file name="scripts/init_db.py">
+#!/usr/bin/env python3
+"""
+初始化状态达标线管理数据库
+创建 SQLite 数据库表结构并预装预设的 status benchmarks
+"""
+
+import sqlite3
+import os
+from datetime import datetime
+
+# 获取数据库路径（支持直接调用和exec调用）
+if '__file__' in dir():
+    DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'status_benchmarks.db')
+else:
+    DB_PATH = os.path.join(os.getcwd(), 'data', 'status_benchmarks.db')
+
+
+def init_database():
+    """初始化数据库，创建 status_benchmarks 表"""
+    # 确保 data 目录存在
+    data_dir = os.path.dirname(DB_PATH)
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS status_benchmarks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            target_value REAL NOT NULL,
+            unit TEXT,
+            period TEXT NOT NULL CHECK(period IN ('daily', 'weekly')),
+            comparison_type TEXT NOT NULL CHECK(comparison_type IN ('>=', '<=')),
+            current_value REAL DEFAULT 0,
+            is_met BOOLEAN DEFAULT 0,
+            calculation_script TEXT NOT NULL,
+            source_url TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_calculated_at TIMESTAMP
+        )
+    ''')
+
+    conn.commit()
+
+    # 检查是否已有数据，如果没有则插入预设的 benchmarks
+    cursor.execute('SELECT COUNT(*) FROM status_benchmarks')
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        # 预设的 status benchmarks
+        preset_benchmarks = [
+            ("每日工作时间", 5.0, "小时", "daily", ">=", "fetch_data/fetch_feishu_data.py",
+             "https://my.feishu.cn/base/AUagbEJ3ZadyjwsfjAPcD991nGg?table=tblFXOx2aYXcDLLw&view=vewjPhzV7h"),
+            ("每周工作时间", 35.0, "小时", "weekly", ">=", "fetch_data/fetch_feishu_data.py",
+             "https://my.feishu.cn/base/AUagbEJ3ZadyjwsfjAPcD991nGg?table=tblFXOx2aYXcDLLw&view=vewjPhzV7h"),
+            ("每日创作时间", 4.0, "小时", "daily", ">=", "fetch_data/fetch_feishu_data.py",
+             "https://my.feishu.cn/base/AUagbEJ3ZadyjwsfjAPcD991nGg?table=tblFXOx2aYXcDLLw&view=vewjPhzV7h"),
+            ("每周创作时间", 25.0, "小时", "weekly", ">=", "fetch_data/fetch_feishu_data.py",
+             "https://my.feishu.cn/base/AUagbEJ3ZadyjwsfjAPcD991nGg?table=tblFXOx2aYXcDLLw&view=vewjPhzV7h"),
+            ("每日娱乐+放松时间", 1.0, "小时", "daily", "<=", "fetch_data/fetch_feishu_data.py",
+             "https://my.feishu.cn/base/AUagbEJ3ZadyjwsfjAPcD991nGg?table=tblFXOx2aYXcDLLw&view=vewjPhzV7h"),
+            ("每日运动时间", 0.5, "小时", "daily", ">=", "fetch_data/fetch_feishu_data.py",
+             "https://my.feishu.cn/base/AUagbEJ3ZadyjwsfjAPcD991nGg?table=tblFXOx2aYXcDLLw&view=vewjPhzV7h"),
+            ("每周运动时间", 5.0, "小时", "weekly", ">=", "fetch_data/fetch_feishu_data.py",
+             "https://my.feishu.cn/base/AUagbEJ3ZadyjwsfjAPcD991nGg?table=tblFXOx2aYXcDLLw&view=vewjPhzV7h"),
+        ]
+
+        for benchmark in preset_benchmarks:
+            cursor.execute('''
+                INSERT INTO status_benchmarks
+                (name, target_value, unit, period, comparison_type,
+                 calculation_script, source_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', benchmark)
+
+        conn.commit()
+        print(f"Initialized {len(preset_benchmarks)} preset benchmarks.")
+
+    conn.close()
+    print(f"Database initialized at: {DB_PATH}")
+
+
+if __name__ == "__main__":
+    init_database()
+</file>
+
+<file name="scripts/manage_benchmarks.py">
+#!/usr/bin/env python3
+"""
+状态达标线管理脚本
+处理 status benchmark 的增删改查操作
+"""
+
+import sqlite3
+import os
+from datetime import datetime
+
+# 获取数据库路径（支持直接调用和exec调用）
+if '__file__' in dir():
+    DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'status_benchmarks.db')
+else:
+    DB_PATH = os.path.join(os.getcwd(), 'data', 'status_benchmarks.db')
+
+
+def add_benchmark(name, target_value, unit, period, comparison_type,
+                   calculation_script, source_url=None):
+    """添加新的 status benchmark"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            INSERT INTO status_benchmarks
+            (name, target_value, unit, period, comparison_type,
+             calculation_script, source_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (name, float(target_value), unit, period, comparison_type,
+              calculation_script, source_url))
+
+        conn.commit()
+        benchmark_id = cursor.lastrowid
+        conn.close()
+        return benchmark_id
+    except Exception as e:
+        conn.close()
+        raise e
+
+
+def update_benchmark(benchmark_id, name=None, target_value=None, unit=None,
+                     period=None, comparison_type=None, calculation_script=None,
+                     source_url=None):
+    """修改 benchmark 信息"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    updates = []
+    values = []
+
+    if name:
+        updates.append("name = ?")
+        values.append(name)
+    if target_value is not None:
+        updates.append("target_value = ?")
+        values.append(float(target_value))
+    if unit is not None:
+        updates.append("unit = ?")
+        values.append(unit)
+    if period:
+        updates.append("period = ?")
+        values.append(period)
+    if comparison_type:
+        updates.append("comparison_type = ?")
+        values.append(comparison_type)
+    if calculation_script:
+        updates.append("calculation_script = ?")
+        values.append(calculation_script)
+    if source_url is not None:
+        updates.append("source_url = ?")
+        values.append(source_url)
+
+    if not updates:
+        conn.close()
+        return False
+
+    values.append(int(benchmark_id))
+    query = f"UPDATE status_benchmarks SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+
+    try:
+        cursor.execute(query, values)
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        conn.close()
+        raise e
+
+
+def delete_benchmark(benchmark_id):
+    """删除 benchmark"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('DELETE FROM status_benchmarks WHERE id = ?', (int(benchmark_id),))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        conn.close()
+        raise e
+
+
+def get_all_benchmarks():
+    """获取所有 benchmarks"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT id, name, target_value, unit, period, comparison_type,
+               current_value, is_met, calculation_script, source_url,
+               created_at, updated_at, last_calculated_at
+        FROM status_benchmarks
+        ORDER BY period, id
+    ''')
+
+    columns = ['id', 'name', 'target_value', 'unit', 'period', 'comparison_type',
+               'current_value', 'is_met', 'calculation_script', 'source_url',
+               'created_at', 'updated_at', 'last_calculated_at']
+    results = []
+    for row in cursor.fetchall():
+        results.append(dict(zip(columns, row)))
+
+    conn.close()
+    return results
+
+
+def get_benchmark(benchmark_id):
+    """获取单个 benchmark"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT id, name, target_value, unit, period, comparison_type,
+               current_value, is_met, calculation_script, source_url,
+               created_at, updated_at, last_calculated_at
+        FROM status_benchmarks WHERE id = ?
+    ''', (int(benchmark_id),))
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        columns = ['id', 'name', 'target_value', 'unit', 'period', 'comparison_type',
+                   'current_value', 'is_met', 'calculation_script', 'source_url',
+                   'created_at', 'updated_at', 'last_calculated_at']
+        return dict(zip(columns, row))
+    return None
+
+
+def get_benchmarks_by_period(period):
+    """根据周期获取 benchmarks (daily 或 weekly)"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT id, name, target_value, unit, period, comparison_type,
+               current_value, is_met, calculation_script, source_url,
+               created_at, updated_at, last_calculated_at
+        FROM status_benchmarks WHERE period = ?
+        ORDER BY id
+    ''', (period,))
+
+    columns = ['id', 'name', 'target_value', 'unit', 'period', 'comparison_type',
+               'current_value', 'is_met', 'calculation_script', 'source_url',
+               'created_at', 'updated_at', 'last_calculated_at']
+    results = []
+    for row in cursor.fetchall():
+        results.append(dict(zip(columns, row)))
+
+    conn.close()
+    return results
+
+
+def update_current_value(benchmark_id, current_value, is_met):
+    """更新 benchmark 的当前值和达标状态"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            UPDATE status_benchmarks
+            SET current_value = ?, is_met = ?, updated_at = CURRENT_TIMESTAMP,
+                last_calculated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (float(current_value), int(is_met), int(benchmark_id)))
+
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        conn.close()
+        raise e
+</file>
+
+<file name="scripts/calculate_values.py">
+#!/usr/bin/env python3
+"""
+状态值计算和达标判定脚本
+计算 benchmark 的当前值并判定是否达标
+"""
+
+import sqlite3
+import os
+import sys
+from datetime import datetime, date, timedelta
+
+# 获取数据库路径（支持直接调用和exec调用）
+if '__file__' in dir():
+    DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'status_benchmarks.db')
+    SCRIPTS_DIR = os.path.dirname(__file__)
+else:
+    DB_PATH = os.path.join(os.getcwd(), 'data', 'status_benchmarks.db')
+    SCRIPTS_DIR = os.path.join(os.getcwd(), 'scripts')
+
+
+def get_period_range(period_type):
+    """
+    获取当前周期的开始和结束时间
+
+    Args:
+        period_type: 'daily' 或 'weekly'
+
+    Returns:
+        tuple: (period_start, period_end) 都是 datetime 对象
+    """
+    now = datetime.now()
+
+    if period_type == 'daily':
+        # 今天的开始和结束
+        period_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        period_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+    elif period_type == 'weekly':
+        # 本周的开始（周一）和结束（周日）
+        # 获取今天是星期几 (0=周一, 6=周日)
+        today = now.date()
+        weekday = today.weekday()  # Monday is 0
+        period_start = datetime.combine(today - timedelta(days=weekday), datetime.min.time())
+        period_end = datetime.combine(today + timedelta(days=6-weekday), datetime.max.time())
+    else:
+        raise ValueError(f"Unsupported period type: {period_type}")
+
+    return period_start, period_end
+
+
+def check_if_met(current_value, target_value, comparison_type):
+    """
+    判断是否达标
+
+    Args:
+        current_value: 当前值
+        target_value: 目标值
+        comparison_type: '>=' 或 '<='
+
+    Returns:
+        bool: 是否达标
+    """
+    if comparison_type == '>=':
+        return current_value >= target_value
+    elif comparison_type == '<=':
+        return current_value <= target_value
+    else:
+        raise ValueError(f"Unsupported comparison type: {comparison_type}")
+
+
+def calculate_gap(current_value, target_value, comparison_type):
+    """
+    计算与目标的差距
+
+    Args:
+        current_value: 当前值
+        target_value: 目标值
+        comparison_type: '>=' 或 '<='
+
+    Returns:
+        float: 差距值（正值表示还需要多少才能达标）
+    """
+    if comparison_type == '>=':
+        gap = target_value - current_value
+        return max(0, gap)  # 已达标则返回0
+    elif comparison_type == '<=':
+        gap = current_value - target_value
+        return max(0, gap)  # 已达标则返回0
+    else:
+        raise ValueError(f"Unsupported comparison type: {comparison_type}")
+
+
+def determine_metric_type(benchmark_name):
+    """
+    根据 benchmark 名称确定 metric_type
+
+    Args:
+        benchmark_name: benchmark 的名称，例如 "每日工作时间"
+
+    Returns:
+        str: metric_type，例如 "daily_work_time"
+    """
+    # 定义名称到 metric_type 的映射
+    metric_mappings = {
+        '每日工作时间': 'daily_work_time',
+        '每周工作时间': 'weekly_work_time',
+        '每日创作时间': 'daily_creation_time',
+        '每周创作时间': 'weekly_creation_time',
+        '每日娱乐+放松时间': 'daily_entertainment_time',
+        '每日运动时间': 'daily_exercise_time',
+        '每周运动时间': 'weekly_exercise_time',
+    }
+
+    return metric_mappings.get(benchmark_name, None)
+
+
+def load_and_execute_calculation_script(script_path, period_start, period_end, metric_type=None):
+    """
+    加载并执行计算脚本
+
+    Args:
+        script_path: 计算脚本路径（相对于 scripts/ 目录）
+        period_start: 周期开始时间
+        period_end: 周期结束时间
+        metric_type: 可选，指定要计算的指标类型
+
+    Returns:
+        float: 计算得到的当前值
+    """
+    full_script_path = os.path.join(SCRIPTS_DIR, script_path)
+
+    if not os.path.exists(full_script_path):
+        raise FileNotFoundError(f"Calculation script not found: {full_script_path}")
+
+    # 将脚本路径转换为模块导入路径
+    module_path = script_path.replace('/', '.').replace('.py', '')
+
+    try:
+        # 动态导入模块
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(module_path, full_script_path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_path] = module
+        spec.loader.exec_module(module)
+
+        # 获取 calculate_current_value 函数
+        if hasattr(module, 'calculate_current_value'):
+            # 尝试传入 metric_type 参数（如果函数支持）
+            try:
+                current_value = module.calculate_current_value(period_start, period_end, metric_type)
+            except TypeError:
+                # 如果函数不支持 metric_type 参数，使用旧的调用方式（向后兼容）
+                current_value = module.calculate_current_value(period_start, period_end)
+            return float(current_value)
+        else:
+            raise ValueError("Script does not define 'calculate_current_value' function")
+    except Exception as e:
+        raise Exception(f"Error executing calculation script {script_path}: {str(e)}")
+
+
+def update_single_benchmark(benchmark_id):
+    """
+    更新单个 benchmark 的当前值和达标状态
+
+    Args:
+        benchmark_id: benchmark 的 ID
+
+    Returns:
+        dict: 包含更新结果的字典
+    """
+    # 获取 benchmark 信息
+    from manage_benchmarks import get_benchmark, update_current_value
+
+    benchmark = get_benchmark(benchmark_id)
+
+    if not benchmark:
+        raise ValueError(f"Benchmark with ID {benchmark_id} not found")
+
+    # 获取周期时间范围
+    period_start, period_end = get_period_range(benchmark['period'])
+
+    # 确定要计算的指标类型
+    metric_type = determine_metric_type(benchmark['name'])
+
+    # 调用计算脚本
+    try:
+        current_value = load_and_execute_calculation_script(
+            benchmark['calculation_script'],
+            period_start,
+            period_end,
+            metric_type
+        )
+
+        # 判断是否达标
+        is_met = check_if_met(current_value, benchmark['target_value'],
+                             benchmark['comparison_type'])
+
+        # 更新数据库
+        update_current_value(benchmark_id, current_value, is_met)
+
+        # 计算差距
+        gap = calculate_gap(current_value, benchmark['target_value'],
+                           benchmark['comparison_type'])
+
+        return {
+            'success': True,
+            'benchmark_id': benchmark_id,
+            'name': benchmark['name'],
+            'current_value': current_value,
+            'target_value': benchmark['target_value'],
+            'comparison_type': benchmark['comparison_type'],
+            'is_met': is_met,
+            'gap': gap if not is_met else 0,
+            'unit': benchmark['unit'],
+            'period': benchmark['period'],
+            'period_start': period_start,
+            'period_end': period_end
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'benchmark_id': benchmark_id,
+            'error': str(e)
+        }
+
+
+def update_all_benchmarks():
+    """
+    更新所有 benchmarks 的当前值和达标状态
+
+    Returns:
+        list: 包含所有 benchmark 更新结果的列表
+    """
+    from manage_benchmarks import get_all_benchmarks
+
+    benchmarks = get_all_benchmarks()
+    results = []
+
+    for benchmark in benchmarks:
+        result = update_single_benchmark(benchmark['id'])
+        results.append(result)
+
+    return results
+
+
+def generate_report():
+    """生成达标报告"""
+    from manage_benchmarks import get_all_benchmarks
+
+    benchmarks = get_all_benchmarks()
+
+    if not benchmarks:
+        return "目前没有设置任何状态达标线。"
+
+    # 分为 daily 和 weekly 两组
+    daily_benchmarks = [b for b in benchmarks if b['period'] == 'daily']
+    weekly_benchmarks = [b for b in benchmarks if b['period'] == 'weekly']
+
+    report_lines = ["=" * 60]
+    report_lines.append("📊 状态达标线报告")
+    report_lines.append("=" * 60)
+
+    # 处理 daily benchmarks
+    if daily_benchmarks:
+        report_lines.append("\n📅 每日达标线")
+        report_lines.append("-" * 60)
+        for b in daily_benchmarks:
+            status = "✅ 已达标" if b['is_met'] else "❌ 未达标"
+            if not b['is_met']:
+                gap = calculate_gap(b['current_value'], b['target_value'], b['comparison_type'])
+                gap_info = f" (差距 {gap}{b['unit'] or ''})"
+            else:
+                gap_info = ""
+
+            report_lines.append(f"\n📌 {b['name']}")
+            report_lines.append(f"   目标值: {b['comparison_type']} {b['target_value']} {b['unit'] or ''}")
+            report_lines.append(f"   当前值: {b['current_value']} {b['unit'] or ''}")
+            report_lines.append(f"   达标状态: {status}{gap_info}")
+            if b['last_calculated_at']:
+                report_lines.append(f"   最后计算: {b['last_calculated_at']}")
+
+    # 处理 weekly benchmarks
+    if weekly_benchmarks:
+        report_lines.append("\n📅 每周达标线")
+        report_lines.append("-" * 60)
+        for b in weekly_benchmarks:
+            status = "✅ 已达标" if b['is_met'] else "❌ 未达标"
+            if not b['is_met']:
+                gap = calculate_gap(b['current_value'], b['target_value'], b['comparison_type'])
+                gap_info = f" (差距 {gap}{b['unit'] or ''})"
+            else:
+                gap_info = ""
+
+            report_lines.append(f"\n📌 {b['name']}")
+            report_lines.append(f"   目标值: {b['comparison_type']} {b['target_value']} {b['unit'] or ''}")
+            report_lines.append(f"   当前值: {b['current_value']} {b['unit'] or ''}")
+            report_lines.append(f"   达标状态: {status}{gap_info}")
+            if b['last_calculated_at']:
+                report_lines.append(f"   最后计算: {b['last_calculated_at']}")
+
+    report_lines.append("\n" + "=" * 60)
+
+    return "\n".join(report_lines)
+
+
+def get_benchmark_summary(benchmark_id):
+    """获取单个 benchmark 的摘要信息"""
+    from manage_benchmarks import get_benchmark
+
+    benchmark = get_benchmark(benchmark_id)
+
+    if not benchmark:
+        return f"未找到 ID 为 {benchmark_id} 的状态达标线"
+
+    status = "✅ 已达标" if benchmark['is_met'] else "❌ 未达标"
+
+    if not benchmark['is_met']:
+        gap = calculate_gap(benchmark['current_value'], benchmark['target_value'],
+                          benchmark['comparison_type'])
+        gap_info = f"\n   差距: {gap}{benchmark['unit'] or ''}"
+    else:
+        gap_info = ""
+
+    summary = f"""
+状态达标线: {benchmark['name']}
+周期: {benchmark['period']}
+目标值: {benchmark['comparison_type']} {benchmark['target_value']} {benchmark['unit'] or ''}
+当前值: {benchmark['current_value']} {benchmark['unit'] or ''}
+达标状态: {status}{gap_info}
+最后更新: {benchmark['updated_at']}
+最后计算: {benchmark['last_calculated_at'] or '未计算'}
+计算脚本: {benchmark['calculation_script']}
+数据源: {benchmark['source_url'] or '未指定'}
+    """.strip()
+
+    return summary
+
+
+if __name__ == "__main__":
+    # 测试：更新所有 benchmarks 并生成报告
+    print("Updating all benchmarks...")
+    results = update_all_benchmarks()
+
+    for result in results:
+        if result['success']:
+            print(f"✓ {result['name']}: {result['current_value']} {result['unit']} (target: {result['comparison_type']} {result['target_value']})")
+        else:
+            print(f"✗ {result['benchmark_id']}: {result['error']}")
+
+    print("\n" + generate_report())
+</file>
+
+<file name="scripts/fetch_data/fetch_feishu_data.py">
+#!/usr/bin/env python3
+"""
+从飞书多维表格获取时间数据的脚本（支持两种授权方式）
+
+特点：
+- 仅执行读取操作，不修改任何数据
+- 支持 COZE 方式（原有的 Skill 授权）
+- 支持飞书开放平台 OAuth 2.0（app_id + app_secret）
+
+数据源：https://my.feishu.cn/base/AUagbEJ3ZadyjwsfjAPcD991nGg?table=tblFXOx2aYXcDLLw&view=vewjPhzV7h
+"""
+
+import sys
+import os
+from datetime import datetime, timedelta
+
+# 加载 .env 文件（如果存在）
+def load_env_file():
+    """从 .env 文件加载环境变量"""
+    # 首先尝试从 skill 根目录加载
+    skill_root = os.path.dirname(os.path.dirname(__file__))
+    env_path = os.path.join(skill_root, '.env')
+
+    if not os.path.exists(env_path):
+        # 尝试从当前工作目录加载
+        env_path = os.path.join(os.getcwd(), '.env')
+
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+        return None
+
+# 加载 .env 文件
+load_env_file()
+
+# 导入 requests
+try:
+    # 尝试导入 coze_workload_identity 中的 requests（向后兼容）
+    from coze_workload_identity import requests
+except ImportError:
+    import requests
+
+# 飞书配置（从环境变量读取）
+FEISHU_APP_TOKEN = os.getenv("FEISHU_APP_TOKEN", "AUagbEJ3ZadyjwsfjAPcD991nGg")
+FEISHU_TABLE_ID = os.getenv("FEISHU_TABLE_ID", "tblFXOx2aYXcDLLw")
+FEISHU_VIEW_ID = os.getenv("FEISHU_VIEW_ID", "vewjPhzV7h")
+
+# OAuth 凭证配置
+SKILL_ID = "7605639493156274228"
+
+
+def determine_token_type():
+    """
+    判断使用哪种 token 类型
+    """
+    # 优先使用飞书开放平台 OAuth 2.0
+    oauth_token = os.getenv("FEISHU_OAUTH_ACCESS_TOKEN", "")
+
+    if oauth_token:
+        print(f"[INFO] 使用飞书开放平台 OAuth 2.0 方式（已有 token）", file=sys.stderr)
+        return "oauth_open"
+
+    # 检查是否有 app_id 和 app_secret，可以获取新 token
+    app_id = os.getenv("FEISHU_APP_ID", "")
+    app_secret = os.getenv("FEISHU_APP_SECRET", "")
+
+    if app_id and app_secret:
+        print(f"[INFO] 使用飞书开放平台 OAuth 2.0 方式（使用 app_id/app_secret 获取 token）", file=sys.stderr)
+        return "oauth_open_auto"
+
+    # 检查是否为 COZE 方式
+    coze_token = os.getenv(f"COZE_FEISHU_BITABLE_{SKILL_ID}", "")
+    if coze_token:
+        print(f"[INFO] 使用 COZE 方式", file=sys.stderr)
+        return "coze"
+
+    else:
+        return None
+
+
+def get_access_token():
+    """
+    获取飞书 OAuth 访问令牌（自动选择正确类型）
+    """
+    token_type = determine_token_type()
+
+    if token_type == "oauth_open":
+        # 飞书开放平台 OAuth 2.0：使用 FEISHU_OAUTH_ACCESS_TOKEN
+        oauth_token = os.getenv("FEISHU_OAUTH_ACCESS_TOKEN", "")
+
+        if not oauth_token:
+            raise ValueError(
+                "缺少飞书开放平台 OAuth 2.0 凭证。\n"
+                "请设置环境变量 FEISHU_OAUTH_ACCESS_TOKEN\n"
+            )
+
+        return oauth_token
+
+    elif token_type == "oauth_open_auto":
+        # 飞书开放平台 OAuth 2.0：使用 app_id + app_secret 自动获取 token
+        app_id = os.getenv("FEISHU_APP_ID", "")
+        app_secret = os.getenv("FEISHU_APP_SECRET", "")
+
+        if not app_id or not app_secret:
+            raise ValueError(
+                "缺少飞书开放平台凭证。\n"
+                "请设置环境变量 FEISHU_APP_ID 和 FEISHU_APP_SECRET\n"
+            )
+
+        # 调用飞书 API 获取 tenant_access_token
+        token_url = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
+
+        payload = {
+            "app_id": app_id,
+            "app_secret": app_secret
+        }
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        try:
+            response = requests.post(token_url, json=payload, headers=headers, timeout=30)
+
+            if response.status_code != 200:
+                raise Exception(f"获取 access_token 失败: HTTP {response.status_code}")
+
+            data = response.json()
+
+            if data.get("code") != 0:
+                error_msg = data.get("msg", "未知错误")
+                raise Exception(f"获取 access_token 失败: {error_msg}")
+
+            access_token = data.get("tenant_access_token", "")
+
+            if not access_token:
+                raise Exception("获取 access_token 失败: 响应中无 token")
+
+            return access_token
+
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"API 调用失败: {str(e)}")
+
+    elif token_type == "coze":
+        # COZE 方式：使用 COZE_FEISHU_BITABLE_{SKILL_ID}
+        coze_token = os.getenv(f"COZE_FEISHU_BITABLE_{SKILL_ID}", "")
+
+        if not coze_token:
+            raise ValueError(
+                f"缺少 COZE OAuth 凭证（Skill 授权）。\n"
+                "请设置环境变量 COZE_FEISHU_BITABLE_{SKILL_ID}，或设置 FEISHU_OAUTH_ACCESS_TOKEN 切换到飞书开放平台方式\n"
+            )
+
+        return coze_token
+
+    else:
+        raise ValueError("未知的 token 类型配置，请检查环境变量")
+
+
+def get_auth_headers():
+    """
+    根据使用的 token 类型返回正确的认证 headers
+    """
+    token_type = determine_token_type()
+
+    if token_type == "oauth_open" or token_type == "oauth_open_auto":
+        # 飞书开放平台 OAuth 2.0
+        access_token = get_access_token()
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+
+    elif token_type == "coze":
+        # COZE 方式：使用 COZE_FEISHU_BITABLE_{SKILL_ID}
+        coze_token = os.getenv(f"COZE_FEISHU_BITABLE_{SKILL_ID}", "")
+
+        headers = {
+            "Authorization": f"Bearer {coze_token}",
+            "Content-Type": "application/json"
+        }
+    else:
+        raise ValueError("未知的 token 类型")
+
+    return headers
+
+
+def fetch_feishu_records(period_start=None, period_end=None):
+    """
+    从飞书多维表格获取记录
+
+    支持两种授权方式：
+    - OAuth 2.0：使用 app_id + app_secret
+    - COZE：使用 Skill 的 access_token
+
+    支持日期筛选：
+    - period_start: datetime 对象，筛选开始日期
+    - period_end: datetime 对象，筛选结束日期
+
+    根据使用的方式不同，API URL 和认证方式也会不同
+    """
+    access_token = get_access_token()
+    headers = get_auth_headers()
+
+    # 确定 API URL
+    api_url = f"https://open.feishu.cn/open-apis/bitable/v1/apps/{FEISHU_APP_TOKEN}/tables/{FEISHU_TABLE_ID}/records"
+
+    # 分页获取所有记录
+    all_records = []
+    page_token = ""
+
+    # 转换日期格式用于筛选
+    start_date_str = None
+    end_date_str = None
+
+    if period_start and period_end:
+        start_date_str = period_start.strftime("%Y-%m-%d")
+        end_date_str = period_end.strftime("%Y-%m-%d")
+
+    try:
+        while True:
+            params = {
+                "page_size": 500
+            }
+
+            if FEISHU_VIEW_ID:
+                params["view_id"] = FEISHU_VIEW_ID
+
+            if page_token:
+                params["page_token"] = page_token
+
+            # 发起 GET 请求（只读操作）
+            response = requests.get(
+                api_url,
+                headers=headers,
+                params=params,
+                timeout=30
+            )
+
+            # 检查 HTTP 状态码
+            if response.status_code >= 400:
+                raise Exception(f"HTTP 请求失败: 状态码 {response.status_code}, 响应内容: {response.text}")
+
+            data = response.json()
+
+            # 错误处理
+            code = data.get("code", 0)
+            if code != 0:
+                msg = data.get("msg", "未知错误")
+                raise Exception(f"飞书接口错误[{code}]: {msg}")
+
+            # 提取记录
+            records = data.get("data", {}).get("items", [])
+
+            # 如果指定了日期范围，进行筛选
+            if period_start and period_end:
+                filtered_records = []
+                for record in records:
+                    fields = record.get('fields', {})
+                    # 获取开始时间（毫秒时间戳）
+                    start_time = fields.get('开始时间', 0)
+                    if start_time:
+                        # 转换为 datetime 对象
+                        record_date = datetime.fromtimestamp(start_time / 1000)
+                        # 检查是否在指定范围内
+                        if period_start <= record_date <= period_end:
+                            filtered_records.append(record)
+                all_records.extend(filtered_records)
+            else:
+                all_records.extend(records)
+
+            # 检查是否还有更多数据
+            has_more = data.get("data", {}).get("has_more", False)
+            if not has_more:
+                break
+
+            page_token = data.get("data", {}).get("page_token", "")
+
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"API 调用失败: {str(e)}")
+
+    return all_records
+
+
+# 时间类别映射
+CATEGORY_MAPPINGS = {
+    'work': ['💼 其他工作', '💼 工作'],
+    'creation': ['👑 创作', '自媒体选题和初步创作', '嵌入式ai 调研'],
+    'entertainment': ['💆 放松', '📀 刷视频', '📱 刷社交媒体', '🪁 其他娱乐'],
+    'exercise': ['🏋️ 健身', '🏊 其他运动'],
+}
+
+
+def calculate_category_duration(records, category_mappings):
+    """
+    计算指定类别的总时长（小时）
+
+    Args:
+        records: 飞书记录列表
+        category_mappings: 类别映射列表，例如 ['💼 其他工作']
+
+    Returns:
+        float: 总时长（小时）
+    """
+    total_hours = 0.0
+
+    for record in records:
+        fields = record.get('fields', {})
+
+        # 获取类别字段
+        category = fields.get('二级分类', '') or fields.get('类别', '') or fields.get('Category', '')
+
+        # 处理类别字段（可能是列表）
+        if isinstance(category, list) and len(category) > 0:
+            if isinstance(category[0], dict):
+                category = category[0].get('text', '')
+            else:
+                category = str(category[0])
+
+        # 获取时长字段
+        duration = fields.get('任务时长（小时）', 0) or fields.get('时长', 0) or fields.get('Duration', 0) or fields.get('小时', 0)
+
+        # 转换为浮点数
+        try:
+            duration = float(duration)
+        except (ValueError, TypeError):
+            continue
+
+        # 检查类别是否匹配
+        if category in category_mappings:
+            total_hours += duration
+
+    return total_hours
+
+
+def calculate_current_value(period_start, period_end, metric_type=None):
+    """
+    主计算函数
+
+    Args:
+        period_start: datetime 对象，周期开始时间
+        period_end: datetime 对象，周期结束时间
+        metric_type: str，可选指标类型，支持以下值：
+            - 'daily_work_time': 每日工作时间
+            - 'weekly_work_time': 每周工作时间
+            - 'daily_creation_time': 每日创作时间
+            - 'weekly_creation_time': 每周创作时间
+            - 'daily_entertainment_time': 每日娱乐+放松时间
+            - 'daily_exercise_time': 每日运动时间
+            - 'weekly_exercise_time': 每周运动时间
+            如果为 None，返回所有值中第一个非零的值（向后兼容）
+
+    Returns:
+        float: 计算得到的当前值
+    """
+    records = fetch_feishu_records(period_start, period_end)
+
+    # 计算所有可能的指标
+    values = {
+        'daily_work_time': calculate_category_duration(records, CATEGORY_MAPPINGS['work']),
+        'weekly_work_time': calculate_category_duration(records, CATEGORY_MAPPINGS['work']),
+        'daily_creation_time': calculate_category_duration(records, CATEGORY_MAPPINGS['creation']),
+        'weekly_creation_time': calculate_category_duration(records, CATEGORY_MAPPINGS['creation']),
+        'daily_entertainment_time': calculate_category_duration(records, CATEGORY_MAPPINGS['entertainment']),
+        'daily_exercise_time': calculate_category_duration(records, CATEGORY_MAPPINGS['exercise']),
+        'weekly_exercise_time': calculate_category_duration(records, CATEGORY_MAPPINGS['exercise']),
+    }
+
+    # 如果指定了 metric_type，返回对应的值
+    if metric_type and metric_type in values:
+        return values[metric_type]
+
+    # 临时方案：返回所有值中第一个非零的值（向后兼容）
+    for value in values.values():
+        if value > 0:
+            return value
+
+    return 0.0
+
+
+if __name__ == "__main__":
+    # 测试：获取今天的记录
+    now = datetime.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    try:
+        records = fetch_feishu_records(today_start, today_end)
+        print(f"获取到 {len(records)} 条记录", file=sys.stderr)
+
+        # 打印前3条记录用于调试
+        for i, record in enumerate(records[:3]):
+            print(f"记录 {i+1}: {record.get('fields', {})}")
+
+        # 计算各类别时长
+        print(f"\n工作时间: {calculate_category_duration(records, CATEGORY_MAPPINGS['work'])} 小时")
+        print(f"创作时间: {calculate_category_duration(records, CATEGORY_MAPPINGS['creation'])} 小时")
+        print(f"娱乐+放松时间: {calculate_category_duration(records, CATEGORY_MAPPINGS['entertainment'])} 小时")
+        print(f"运动时间: {calculate_category_duration(records, CATEGORY_MAPPINGS['exercise'])} 小时")
+
+    except Exception as e:
+        print(f"错误: {str(e)}", file=sys.stderr)
+</file>
