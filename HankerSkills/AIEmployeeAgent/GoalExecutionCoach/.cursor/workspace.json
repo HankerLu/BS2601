@@ -1,0 +1,6 @@
+{
+  "name": "GoalExecutionCoach Workspace",
+  "description": "Goal Execution Coach - 专注于目标执行和任务管理的独立技能集合",
+  "workspaceSkillsOnly": true,
+  "skillsPath": ".cursor/skills"
+}
