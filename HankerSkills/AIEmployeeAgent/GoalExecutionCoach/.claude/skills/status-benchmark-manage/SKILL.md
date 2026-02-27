@@ -171,6 +171,73 @@ def calculate_current_value(period_start, period_end):
 - "修改状态线"、"改一下" → 更新 benchmark 信息
 - "删除状态线"、"不要了" → 删除 benchmark
 
+## CLI 命令行接口
+
+本 skill 提供 CLI 接口，支持命令行方式操作。适用于定时任务、自动化脚本或手动调试。
+
+### 使用方式
+
+```bash
+python .claude/skills/status-benchmark-manage/scripts/cli.py <command> [options]
+```
+
+### 可用命令
+
+#### 1. update - 更新 benchmarks
+
+```bash
+# 更新所有 benchmarks
+python scripts/cli.py update --period all --output-report
+
+# 只更新 daily benchmarks
+python scripts/cli.py update --period daily --output-report
+
+# 只更新 weekly benchmarks
+python scripts/cli.py update --period weekly --output-report
+
+# 更新指定 ID 的 benchmark
+python scripts/cli.py update --id 1
+```
+
+#### 2. report - 生成报告
+
+```bash
+# 生成所有 benchmarks 的报告
+python scripts/cli.py report
+```
+
+#### 3. check-stale - 检查未更新的 benchmarks
+
+```bash
+# 检查 daily benchmarks 是否超过 12 小时未更新
+python scripts/cli.py check-stale --period daily --max-age-hours 12
+
+# 检查 weekly benchmarks 是否超过 24 小时未更新
+python scripts/cli.py check-stale --period weekly --max-age-hours 24
+```
+
+### OpenClaw 定时任务集成
+
+在 OpenClaw 的 `jobs.json` 中配置定时任务：
+
+```json
+{
+  "id": "daily-update-status",
+  "name": "每日更新 Status Benchmarks",
+  "schedule": {
+    "kind": "cron",
+    "expr": "0 23 * * *",
+    "tz": "Asia/Shanghai"
+  },
+  "payload": {
+    "kind": "agentTurn",
+    "message": "请更新所有 daily period 的 status benchmarks 并生成报告"
+  },
+  "sessionTarget": "isolated",
+  "enabled": true
+}
+```
+
 ## 注意事项
 
 1. **路径**：`SKILL_ROOT` 为本 SKILL 根目录（即 `SKILL.md` 所在目录）。若当前工作目录为项目根，可设为 `os.path.join(os.getcwd(), 'status-benchmark-manage')`；若已在 skill 目录内，可设为 `os.getcwd()`。

@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "daily-target-reminder",
+      "name": "每日目标提醒",
+      "description": "每天 10:00 提醒用户更新 target benchmark 进度",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * *",
+        "tz": "Asia/Shanghai"
+      },
+      "payload": {
+        "kind": "agentTurn",
+        "message": "作为GoalExecutionCoach，请检查是否有目标需要在近期（30天内）更新进度，并提醒用户"
+      },
+      "sessionTarget": "isolated",
+      "enabled": true
+    },
+    {
+      "id": "daily-status-followup",
+      "name": "每日状态更新检查",
+      "description": "每天 14:00 检查 daily benchmarks 是否已更新",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 14 * * *",
+        "tz": "Asia/Shanghai"
+      },
+      "payload": {
+        "kind": "agentTurn",
+        "message": "作为status-benchmark-manage skill，请检查哪些 daily benchmarks 已超过 12 小时未更新，并通知用户"
+      },
+      "sessionTarget": "isolated",
+      "enabled": true
+    },
+    {
+      "id": "daily-status-update",
+      "name": "每日状态自动更新",
+      "description": "每天 23:00 自动更新所有 daily status benchmarks",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 23 * * *",
+        "tz": "Asia/Shanghai"
+      },
+      "payload": {
+        "kind": "agentTurn",
+        "message": "作为status-benchmark-manage skill，请更新所有 daily period 的 status benchmarks 并生成达标报告"
+      },
+      "sessionTarget": "isolated",
+      "enabled": true
+    },
+    {
+      "id": "weekly-status-update",
+      "name": "每周日状态自动更新",
+      "description": "每周日 23:00 自动更新所有 weekly status benchmarks",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 23 * * 0",
+        "tz": "Asia/Shanghai"
+      },
+      "payload": {
+        "kind": "agentTurn",
+        "message": "作为status-benchmark-manage skill，请更新所有 weekly period 的 status benchmarks 并生成达标报告"
+      },
+      "sessionTarget": "isolated",
+      "enabled": true
+    },
+    {
+      "id": "summary-report",
+      "name": "状态简报",
+      "description": "每3天生成所有 benchmarks 的状态简报",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 1,4,7,10,13,16,19,22,25,28 * *",
+        "tz": "Asia/Shanghai"
+      },
+      "payload": {
+        "kind": "agentTurn",
+        "message": "作为GoalExecutionCoach，请生成所有 status benchmarks 和 target benchmarks 的状态简报"
+      },
+      "sessionTarget": "isolated",
+      "enabled": true
+    }
+  ]
+}

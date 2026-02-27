@@ -123,6 +123,74 @@ print(generate_report())
 - "修改目标"、"改一下" → 更新目标信息
 - "删除目标"、"不要了" → 删除目标
 
+## CLI 命令行接口
+
+本 skill 提供 CLI 接口，支持命令行方式操作。适用于定时任务、自动化脚本或手动调试。
+
+### 使用方式
+
+```bash
+python .claude/skills/target-benchmark-manage/scripts/cli.py <command> [options]
+```
+
+### 可用命令
+
+#### 1. report - 生成报告
+
+```bash
+# 生成所有目标的报告
+python scripts/cli.py report
+
+# 生成指定目标的报告
+python scripts/cli.py report --id 1
+```
+
+#### 2. list - 列出所有目标
+
+```bash
+# 以简洁格式列出所有目标
+python scripts/cli.py list
+```
+
+#### 3. update - 更新目标当前值
+
+```bash
+# 更新 ID 为 1 的目标的当前值为 75.5
+python scripts/cli.py update --id 1 --value 75.5
+```
+
+#### 4. check-near-deadline - 检查即将到期的目标
+
+```bash
+# 检查 7 天内到期的目标
+python scripts/cli.py check-near-deadline --days 7
+
+# 检查 30 天内到期的目标
+python scripts/cli.py check-near-deadline --days 30
+```
+
+### OpenClaw 定时任务集成
+
+在 OpenClaw 的 `jobs.json` 中配置定时任务：
+
+```json
+{
+  "id": "daily-target-reminder",
+  "name": "每日目标提醒",
+  "schedule": {
+    "kind": "cron",
+    "expr": "0 10 * * *",
+    "tz": "Asia/Shanghai"
+  },
+  "payload": {
+    "kind": "agentTurn",
+    "message": "请检查并提醒我有哪些目标需要在近期更新进度"
+  },
+  "sessionTarget": "isolated",
+  "enabled": true
+}
+```
+
 ## 注意事项
 
 1. **路径**：`SKILL_ROOT` 为本 SKILL 根目录（即 `SKILL.md` 所在目录）。若当前工作目录为项目根，可设为 `os.path.join(os.getcwd(), 'target-benchmark-manage')`；若已在 skill 目录内，可设为 `os.getcwd()`。
