@@ -38,6 +38,31 @@ def init_database():
         )
     ''')
 
+    # 创建历史记录表，用于追踪每次更新的达标情况
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS benchmark_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            benchmark_id INTEGER NOT NULL,
+            current_value REAL NOT NULL,
+            is_met BOOLEAN NOT NULL,
+            period_start TIMESTAMP NOT NULL,
+            period_end TIMESTAMP NOT NULL,
+            recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (benchmark_id) REFERENCES status_benchmarks(id)
+        )
+    ''')
+
+    # 创建索引以加快查询
+    cursor.execute('''
+        CREATE INDEX IF NOT EXISTS idx_history_benchmark_id
+        ON benchmark_history(benchmark_id)
+    ''')
+
+    cursor.execute('''
+        CREATE INDEX IF NOT EXISTS idx_history_recorded_at
+        ON benchmark_history(recorded_at DESC)
+    ''')
+
     conn.commit()
 
     # 检查是否已有数据，如果没有则插入预设的 benchmarks

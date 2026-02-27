@@ -198,6 +198,10 @@ def update_single_benchmark(benchmark_id):
         # 更新数据库
         update_current_value(benchmark_id, current_value, is_met)
 
+        # 记录历史数据
+        from manage_benchmarks import record_history
+        record_history(benchmark_id, current_value, is_met, period_start, period_end)
+
         # 计算差距
         gap = calculate_gap(current_value, benchmark['target_value'],
                            benchmark['comparison_type'])

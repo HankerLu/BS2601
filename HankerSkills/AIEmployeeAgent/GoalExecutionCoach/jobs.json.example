@@ -80,6 +80,38 @@
       },
       "sessionTarget": "isolated",
       "enabled": true
+    },
+    {
+      "id": "weekly-analysis",
+      "name": "周度分析会话",
+      "description": "每周日晚上识别本周问题，如有严重问题则创建分析会话与用户讨论",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 20 * * 0",
+        "tz": "Asia/Shanghai"
+      },
+      "payload": {
+        "kind": "agentTurn",
+        "message": "作为goal-analysis-discussion skill，请识别本周的问题指标，如发现严重问题则创建分析会话并与用户讨论"
+      },
+      "sessionTarget": "isolated",
+      "enabled": true
+    },
+    {
+      "id": "consecutive-missed-alert",
+      "name": "连续未达标预警",
+      "description": "每天晚上检查是否有 status benchmark 连续3次未达标，如有则自动触发分析会话",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 22 * * *",
+        "tz": "Asia/Shanghai"
+      },
+      "payload": {
+        "kind": "agentTurn",
+        "message": "作为goal-analysis-discussion skill，请检查是否有 status benchmark 连续3次未达标，如有则自动触发分析会话"
+      },
+      "sessionTarget": "isolated",
+      "enabled": true
     }
   ]
 }

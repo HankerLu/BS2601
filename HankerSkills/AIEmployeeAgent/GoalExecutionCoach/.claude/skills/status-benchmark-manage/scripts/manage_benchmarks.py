@@ -193,3 +193,102 @@ def update_current_value(benchmark_id, current_value, is_met):
     except Exception as e:
         conn.close()
         raise e
+
+
+def record_history(benchmark_id, current_value, is_met, period_start, period_end):
+    """
+    记录 benchmark 的历史数据
+
+    Args:
+        benchmark_id: benchmark 的 ID
+        current_value: 当前值
+        is_met: 是否达标 (0 或 1)
+        period_start: 周期开始时间 (datetime 对象或字符串)
+        period_end: 周期结束时间 (datetime 对象或字符串)
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # 将 datetime 对象转换为字符串
+    if isinstance(period_start, datetime):
+        period_start = period_start.strftime('%Y-%m-%d %H:%M:%S')
+    if isinstance(period_end, datetime):
+        period_end = period_end.strftime('%Y-%m-%d %H:%M:%S')
+
+    try:
+        cursor.execute('''
+            INSERT INTO benchmark_history
+            (benchmark_id, current_value, is_met, period_start, period_end)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (int(benchmark_id), float(current_value), int(is_met), period_start, period_end))
+
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        conn.close()
+        raise e
+
+
+def get_consecutive_missed(benchmark_id, threshold=3):
+    """
+    获取连续未达标的次数
+
+    Args:
+        benchmark_id: benchmark 的 ID
+        threshold: 返回的最大次数（默认为3）
+
+    Returns:
+        int: 连续未达标的次数
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT is_met
+        FROM benchmark_history
+        WHERE benchmark_id = ?
+        ORDER BY recorded_at DESC
+        LIMIT ?
+    ''', (int(benchmark_id), threshold))
+
+    missed_count = 0
+    for row in cursor.fetchall():
+        if row[0] == 0:  # is_met = 0 表示未达标
+            missed_count += 1
+        else:
+            break  # 遇到达标就停止
+
+    conn.close()
+    return missed_count
+
+
+def get_history(benchmark_id, limit=10):
+    """
+    获取 benchmark 的历史记录
+
+    Args:
+        benchmark_id: benchmark 的 ID
+        limit: 返回的记录数量
+
+    Returns:
+        list: 历史记录列表
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT current_value, is_met, period_start, period_end, recorded_at
+        FROM benchmark_history
+        WHERE benchmark_id = ?
+        ORDER BY recorded_at DESC
+        LIMIT ?
+    ''', (int(benchmark_id), limit))
+
+    columns = ['current_value', 'is_met', 'period_start', 'period_end', 'recorded_at']
+    results = []
+    for row in cursor.fetchall():
+        results.append(dict(zip(columns, row)))
+
+    conn.close()
+    return results
