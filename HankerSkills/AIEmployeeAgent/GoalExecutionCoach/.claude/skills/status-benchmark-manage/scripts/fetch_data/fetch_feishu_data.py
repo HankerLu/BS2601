@@ -301,40 +301,67 @@ def fetch_feishu_records(period_start=None, period_end=None):
 
 
 # 时间类别映射（根据飞书表格实际字段更新）
+# 数据结构说明：
+# - 一级分类 (primary_category): "👩‍💻 工作", "🎮 娱乐", "🧑‍🍳 生活" 等
+# - 二级分类 (secondary_category): "💼 其他工作", "👑 创作", "💆 放松", "📀 刷视频" 等
 CATEGORY_MAPPINGS = {
-    'work': ['💼 其他工作', '💼 工作'],           # 工作时间
-    'creation': ['👑 创作', '自媒体选题和初步创作', '嵌入式ai 调研'],       # 创作时间
-    'entertainment': ['💆 放松', '📀 刷视频', '📱 刷社交媒体', '🪁 其他娱乐'],  # 娱乐+放松时间
-    'exercise': ['🏋️ 健身', '🏊 其他运动'],       # 运动时间
+    'work': {
+        'type': 'primary',  # 基于一级分类统计
+        'values': ['👩‍💻 工作']
+    },
+    'creation': {
+        'type': 'both',  # 基于一级和二级分类联合统计
+        'primary': '👩‍💻 工作',
+        'secondary': ['👑 创作']
+    },
+    'entertainment': {
+        'type': 'secondary',  # 基于二级分类统计
+        'values': ['💆 放松', '📀 刷视频', '📱 刷社交媒体', '🪁 其他娱乐']
+    },
+    'exercise': {
+        'type': 'primary',  # 基于一级分类统计
+        'values': ['🏋️ 运动']
+    },
 }
 
 
-def calculate_category_duration(records, category_mappings):
+def calculate_category_duration(records, category_config):
     """
     计算指定类别的总时长（小时）
 
     Args:
         records: 飞书记录列表
-        category_mappings: 类别映射列表，例如 ['💼 其他工作']
+        category_config: CATEGORY_MAPPINGS 中的值（配置对象）或键（字符串）
 
     Returns:
         float: 总时长（小时）
     """
+    # 如果传入的是字符串键，获取对应的配置
+    if isinstance(category_config, str):
+        category_config = CATEGORY_MAPPINGS.get(category_config, {})
+
     total_hours = 0.0
 
     for record in records:
         fields = record.get('fields', {})
 
-        # 获取类别字段（根据飞书表格实际字段名）
-        category = fields.get('二级分类', '') or fields.get('类别', '') or fields.get('Category', '')
-
-        # 处理类别字段（可能是列表）
-        if isinstance(category, list) and len(category) > 0:
-            # 如果是列表，提取文本
-            if isinstance(category[0], dict):
-                category = category[0].get('text', '')
+        # 获取一级分类字段
+        primary_category = fields.get('一级分类', '')
+        # 处理一级分类字段（可能是列表）
+        if isinstance(primary_category, list) and len(primary_category) > 0:
+            if isinstance(primary_category[0], dict):
+                primary_category = primary_category[0].get('text', '')
             else:
-                category = str(category[0])
+                primary_category = str(primary_category[0])
+
+        # 获取二级分类字段
+        secondary_category = fields.get('二级分类', '')
+        # 处理二级分类字段（可能是列表）
+        if isinstance(secondary_category, list) and len(secondary_category) > 0:
+            if isinstance(secondary_category[0], dict):
+                secondary_category = secondary_category[0].get('text', '')
+            else:
+                secondary_category = str(secondary_category[0])
 
         # 获取时长字段（根据飞书表格实际字段名）
         duration = fields.get('任务时长（小时）', 0) or fields.get('时长', 0) or fields.get('Duration', 0) or fields.get('小时', 0)
@@ -345,8 +372,23 @@ def calculate_category_duration(records, category_mappings):
         except (ValueError, TypeError):
             continue
 
-        # 检查类别是否匹配
-        if category in category_mappings:
+        # 根据类别配置的类型进行匹配
+        match = False
+        if category_config.get('type') == 'primary':
+            # 只匹配一级分类
+            if primary_category in category_config.get('values', []):
+                match = True
+        elif category_config.get('type') == 'secondary':
+            # 只匹配二级分类
+            if secondary_category in category_config.get('values', []):
+                match = True
+        elif category_config.get('type') == 'both':
+            # 同时匹配一级和二级分类
+            if (primary_category == category_config.get('primary') and
+                secondary_category in category_config.get('secondary', [])):
+                match = True
+
+        if match:
             total_hours += duration
 
     return total_hours
