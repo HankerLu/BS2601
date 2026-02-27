@@ -1,0 +1,75 @@
+# Cycle Update Remind - Openclaw 定时任务配置（YAML 格式）
+
+# 定时任务定义
+tasks:
+  # ========================================
+  # 10:00 - 每日更新提醒
+  # ========================================
+  - name: daily_reminder
+    description: 提醒用户更新 target benchmark 的进度
+    schedule:
+      cron: "0 10 * * *"  # 每天 10:00
+    command: python .claude/skills/target-benchmark-manage/cli.py check-near-deadline --days 30
+    enabled: true
+    log_file: /tmp/cycle_reminder.log
+
+  # ========================================
+  # 14:00 - 每日更新检查（催促）
+  # ========================================
+  - name: daily_followup_check
+    description: 检查 daily benchmarks 是否已更新，未更新则发送催促提醒
+    schedule:
+      cron: "0 14 * * *"  # 每天 14:00
+    command: python .claude/skills/status-benchmark-manage/cli.py check-stale --period daily --max-age-hours 12
+    enabled: true
+    log_file: /tmp/cycle_reminder.log
+
+  # ========================================
+  # 23:00 - 每日 benchmarks 自动更新
+  # ========================================
+  - name: daily_update
+    description: 自动更新所有 daily status benchmarks 并生成报告
+    schedule:
+      cron: "0 23 * * *"  # 每天 23:00
+    command: python .claude/skills/status-benchmark-manage/cli.py update --period daily --output-report
+    enabled: true
+    log_file: /tmp/cycle_reminder.log
+
+  # ========================================
+  # 23:00 - 每周 benchmarks 自动更新（周日）
+  # ========================================
+  - name: weekly_update
+    description: 每周日 23:00 更新所有 weekly status benchmarks 并生成报告
+    schedule:
+      cron: "0 23 * * 0"  # 每周日 23:00
+    command: python .claude/skills/status-benchmark-manage/cli.py update --period weekly --output-report
+    enabled: true
+    log_file: /tmp/cycle_reminder.log
+
+  # ========================================
+  # 09:00 - 每3天发送状态简报
+  # ========================================
+  - name: summary_report
+    description: 每3天生成并发送所有 benchmarks 的状态简报
+    schedule:
+      cron: "0 9 1,4,7,10,13,16,19,22,25,28 * *"  # 每月第 1,4,7...天 09:00（约每3天）
+    command: python .claude/skills/status-benchmark-manage/cli.py report
+    enabled: true
+    log_file: /tmp/cycle_reminder.log
+
+# 通知配置
+notification:
+  enabled: true
+  channel: feishu  # 可选：feishu, email, slack, discord 等
+  config:
+    # 飞书通知配置（如果使用）
+    feishu:
+      webhook_url: "${FEISHU_WEBHOOK_URL}"  # 从环境变量读取
+
+# 全局配置
+config:
+  timezone: Asia/Shanghai
+  log_level: INFO
+  log_file: /tmp/cycle_update_remind.log
+  max_log_size: 10MB
+  max_log_files: 5
