@@ -2,15 +2,15 @@
 """
 独立脚本：将飞书多维表格（Bitable）全量记录导出为本地 JSON。
 
-复用 status-benchmark-manage 的 fetch_feishu_data（鉴权、分页、环境与表格 ID 一致）。
+依赖同目录下的 fetch_feishu_data.py（鉴权、分页）；凭证放在同目录 .env（参考 .env.example）。
 仅读取飞书，不修改云端数据。
 
-用法（在 GoalExecutionCoach 根目录）:
+用法（在 bitable_analysis 目录）:
   python3 sync_feishu_bitable_to_json.py
-  python3 sync_feishu_bitable_to_json.py -o ./exports/bitable.json
+  python3 sync_feishu_bitable_to_json.py -o ./feishu_bitable_export.json
   python3 sync_feishu_bitable_to_json.py --no-pretty
 
-环境变量与 fetch_feishu_data 相同，见 .claude/skills/status-benchmark-manage/.env.example
+首次使用：复制 .env.example 为 .env 并填写飞书凭证。
 """
 
 from __future__ import annotations
@@ -21,15 +21,17 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# 与 sync 脚本同目录，保证从项目任意位置调用时仍能导入
+_SYNC_DIR = Path(__file__).resolve().parent
+if str(_SYNC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SYNC_DIR))
 
-def _scripts_dir() -> Path:
-    return (
-        Path(__file__).resolve().parent
-        / ".claude"
-        / "skills"
-        / "status-benchmark-manage"
-        / "scripts"
-    )
+from fetch_feishu_data import (
+    FEISHU_APP_TOKEN,
+    FEISHU_TABLE_ID,
+    FEISHU_VIEW_ID,
+    fetch_feishu_records,
+)
 
 
 def main() -> int:
@@ -41,7 +43,7 @@ def main() -> int:
         "--output",
         type=Path,
         default=Path(__file__).resolve().parent / "feishu_bitable_export.json",
-        help="Output JSON path (default: feishu_bitable_export.json next to this script)",
+        help="Output JSON path (default: feishu_bitable_export.json in this folder)",
     )
     parser.add_argument(
         "--no-pretty",
@@ -49,23 +51,6 @@ def main() -> int:
         help="Write compact JSON (no indent)",
     )
     args = parser.parse_args()
-
-    scripts = _scripts_dir()
-    if not scripts.is_dir():
-        print(f"找不到 skill scripts 目录: {scripts}", file=sys.stderr)
-        return 1
-
-    sys.path.insert(0, str(scripts))
-    try:
-        from fetch_data.fetch_feishu_data import (
-            FEISHU_APP_TOKEN,
-            FEISHU_TABLE_ID,
-            FEISHU_VIEW_ID,
-            fetch_feishu_records,
-        )
-    except ImportError as e:
-        print(f"无法导入 fetch_feishu_data: {e}", file=sys.stderr)
-        return 1
 
     try:
         # 不传周期 => 全部分页拉取；仅在客户端按视图分页，无日期过滤

@@ -1,0 +1,5 @@
+# 运行时放入包内的数据；不强制提交
+/feishu_bitable_export.json
+/work_daily_report.json
+/work_daily_narrated/*.json
+!.gitkeep
