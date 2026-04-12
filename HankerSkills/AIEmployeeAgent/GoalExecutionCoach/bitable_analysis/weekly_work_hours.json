@@ -1,0 +1,84 @@
+{
+  "utc_offset_hours": 8.0,
+  "definition": {
+    "primary_category": "👩‍💻 工作",
+    "hours_field": "任务时长（小时）"
+  },
+  "weeks": [
+    {
+      "iso_year": 2026,
+      "iso_week": 1,
+      "work_hours": 14.633333
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 2,
+      "work_hours": 30.5
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 3,
+      "work_hours": 36.633333
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 4,
+      "work_hours": 25.766667
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 5,
+      "work_hours": 39.416667
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 6,
+      "work_hours": 19.683333
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 7,
+      "work_hours": 41.466667
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 8,
+      "work_hours": 24.15
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 9,
+      "work_hours": 44.316667
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 10,
+      "work_hours": 47.883333
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 11,
+      "work_hours": 51.6
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 12,
+      "work_hours": 53.283333
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 13,
+      "work_hours": 58.266667
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 14,
+      "work_hours": 62.416667
+    },
+    {
+      "iso_year": 2026,
+      "iso_week": 15,
+      "work_hours": 62.75
+    }
+  ]
+}
